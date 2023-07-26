@@ -8,9 +8,9 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Unlit Opaque Green
-  m_Shader: {fileID: 4800000, guid: b01e0c26f090d0e4a87be55ef118e192, type: 3}
+  m_Shader: {fileID: 4800000, guid: 82ca2f1d6194f9b48a5d820fa202327e, type: 3}
   m_ValidKeywords:
-  - _CLIPPING
+  - _PREMULTIPLY_ALPHA
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
@@ -64,8 +64,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _Clipping: 1
-    - _Cutoff: 0.877
+    - _Clipping: 0
+    - _Cutoff: 0.706
     - _DetailNormalMapScale: 1
     - _DstBlend: 10
     - _GlossMapScale: 1
@@ -75,13 +75,15 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _PremulAlpha: 1
+    - _Smoothness: 0.763
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SrcBlend: 5
+    - _SrcBlend: 1
     - _UVSec: 0
-    - _ZWrite: 0
+    - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.6132076, g: 0.084846266, b: 0.084846266, a: 1}
     - _Color: {r: 0.6698113, g: 0.60413396, b: 0.37703213, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

@@ -15,4 +15,6 @@ float4x4 glstate_matrix_projection;
 float4x4 unity_MatrixPreviousM; //上一帧模型矩阵
 float4x4 unity_MatrixPreviousMI;
 
+float3 _WorldSpaceCameraPos;
+
 #endif
