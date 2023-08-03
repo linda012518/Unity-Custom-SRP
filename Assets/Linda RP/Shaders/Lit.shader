@@ -31,13 +31,33 @@ Shader "Linda RP/Lit"
 			#pragma shader_feature _PREMULTIPLY_ALPHA
 
 			#pragma multi_compile_instancing
+
 			#pragma vertex LitPassVertex
 			#pragma fragment LitPassFragment
 
 			#include "LitPass.hlsl"
 
 			ENDHLSL
-		}	
+		}
+		
+		Pass
+		{
+			Tags { "LightMode" = "ShadowCaster" }
+
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma shader_feature _CLIPPING
+			#pragma multi_compile_instancing
+
+			#pragma vertex ShadowCasterVertex
+			#pragma fragment ShadowCasterFragment
+
+			#include "ShadowCasterPass.hlsl"
+
+			ENDHLSL
+		}
 	}
 	CustomEditor "LindaShaderGUI"
 }
