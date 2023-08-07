@@ -31,7 +31,6 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData data, Surface surfac
 	float4 positionSTS = mul(_DirectionalShadowMatrices[data.tileIndex], float4(surfaceWS.position, 1.0));
 	positionSTS.xyz /= positionSTS.w;
 	float shadow = SampleDirectionalShadowAtlas(positionSTS.xyz);
-	return shadow;
 	return lerp(1.0, shadow, data.strength);
 }
 
