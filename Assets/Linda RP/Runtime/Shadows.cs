@@ -24,12 +24,13 @@ public class Shadows
 
     int shadowedDirectionalLightCount;
 
-    static int 
-        dirShadowAltasId = Shader.PropertyToID("_DirectionalShadowAltas"),
+    static int
+        dirShadowAltasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
         dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
 
     static Matrix4x4[]
         dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount];
+
 
     public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings settings)
     {

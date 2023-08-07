@@ -8,7 +8,7 @@ TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 SAMPLER_CMP(SHADOW_SAMPLER);
 
 CBUFFER_START(_LindaShadows)
-	float4 _DirectionalShadowMatrices[Max_Shadowed_Directional_Light_Count];
+	float4x4 _DirectionalShadowMatrices[Max_Shadowed_Directional_Light_Count];
 CBUFFER_END
 
 struct DirectionalShadowData
@@ -19,7 +19,7 @@ struct DirectionalShadowData
 
 float SampleDirectionalShadowAtlas(float3 positionSTS)
 {
-	return SAMPLE_TEXTURE2D_SHADOW(_DirectionalShadowAtlas, SHADOW_SAMPLER, float3(0.5,0.5,0.5));
+	return SAMPLE_TEXTURE2D_SHADOW(_DirectionalShadowAtlas, SHADOW_SAMPLER, positionSTS);
 }
 
 float GetDirectionalShadowAttenuation(DirectionalShadowData data, Surface surfaceWS)

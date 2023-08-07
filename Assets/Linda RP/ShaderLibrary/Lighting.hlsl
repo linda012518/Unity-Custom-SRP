@@ -14,7 +14,7 @@ float3 GetLighting(Surface surface, BRDF brdf, Light light)
 float3 GetLighting(Surface surface, BRDF brdf)
 {
 	Light light = GetDirectionalLight(0, surface);
-	return light.attenuation;
+
 	float3 color = 0.0;
 	for (int i = 0; i < GetDirectionalCount(); i++)
 	{
