@@ -13,7 +13,7 @@ CBUFFER_END
 struct Light {
 	float3 color;
 	float3 direction;
-	float attenaution;
+	float attenuation;
 };
 
 int GetDirectionalCount()
@@ -35,7 +35,7 @@ Light GetDirectionalLight(int index, Surface surfaceWS)
 	light.color = _DirectionalLightColors[index].xyz;
 	light.direction = _DirectionalLightDirections[index].xyz;
 	DirectionalShadowData shadowData = GetDirectionalShadowData(index);
-	light.attenaution = GetDirectionalShadowAttenuation(shadowData, surfaceWS);
+	light.attenuation = GetDirectionalShadowAttenuation(shadowData, surfaceWS);
 	return light;
 }
 
