@@ -2,13 +2,14 @@
 #define Linda_Shadows
 
 #define Max_Shadowed_Directional_Light_Count 4
+#define Max_Cascade_Count 4
 
 TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 #define SHADOW_SAMPLER sampler_linear_clamp_compare //定义合适的阴影采样器
 SAMPLER_CMP(SHADOW_SAMPLER);
 
 CBUFFER_START(_LindaShadows)
-	float4x4 _DirectionalShadowMatrices[Max_Shadowed_Directional_Light_Count];
+	float4x4 _DirectionalShadowMatrices[Max_Shadowed_Directional_Light_Count * Max_Cascade_Count];
 CBUFFER_END
 
 struct DirectionalShadowData
