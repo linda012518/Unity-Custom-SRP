@@ -26,10 +26,13 @@ public class Shadows
 
     static int
         dirShadowAltasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
-        dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
+        dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
+        cascadeCountId = Shader.PropertyToID("_CascadeCount"),
+        cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingShperes"),
+        shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
-    static Matrix4x4[]
-        dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
+    static Matrix4x4[] dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
+    static Vector4[] cascadeCullingShperes = new Vector4[maxCascades];
 
 
     public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings settings)
@@ -91,6 +94,10 @@ public class Shadows
             RenderDirectionalShadows(i, split, tileSize);
         }
 
+        float f = 1 - settings.directional.cascadeFade;
+        buffer.SetGlobalVector(shadowDistanceFadeId, new Vector4(1.0f / settings.maxDistance, 1.0f / settings.distanceFade, 1.0f / (1 - f * f)));
+        buffer.SetGlobalInt(cascadeCountId, settings.directional.cascadeCount);
+        buffer.SetGlobalVectorArray(cascadeCullingSpheresId, cascadeCullingShperes);
         buffer.SetGlobalMatrixArray(dirShadowMatricesId, dirShadowMatrices);
         buffer.EndSample(bufferName);
         ExecuteBuffer();
@@ -111,6 +118,12 @@ public class Shadows
                 light.visibleLightIndex, i, cascadeCount, ratios, tileSize, 0,
                 out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
             shadowSetting.splitData = splitData;
+            if (index == 0) //每个灯光用同样的剔除球，只存一次即可
+            {
+                Vector4 cullingShpere = splitData.cullingSphere;
+                cullingShpere.w *= cullingShpere.w;//预乘半径传入shader
+                cascadeCullingShperes[i] = cullingShpere;//从小球到大球传入
+            }
             int tileIndex = tileOffset + i;
             //VP矩阵固定，设置视口可以选图片局部绘制
             Vector2 offset = SetTileViewport(tileIndex, split, tileSize);
