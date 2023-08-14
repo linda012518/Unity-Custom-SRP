@@ -35,7 +35,7 @@ Light GetDirectionalLight(int index, Surface surfaceWS, ShadowData shadowData)
 	light.color = _DirectionalLightColors[index].xyz;
 	light.direction = _DirectionalLightDirections[index].xyz;
 	DirectionalShadowData dirShadowData = GetDirectionalShadowData(index, shadowData);
-	light.attenuation = GetDirectionalShadowAttenuation(dirShadowData, surfaceWS);
+	light.attenuation = GetDirectionalShadowAttenuation(dirShadowData, shadowData, surfaceWS);
 	//light.attenuation = shadowData.cascadeIndex * 0.25;//查看级联球
 	return light;
 }

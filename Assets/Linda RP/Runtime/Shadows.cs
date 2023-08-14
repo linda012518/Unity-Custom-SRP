@@ -29,10 +29,13 @@ public class Shadows
         dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
         cascadeCountId = Shader.PropertyToID("_CascadeCount"),
         cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingShperes"),
+        cascadeDataId = Shader.PropertyToID("_CascadeData"),
         shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
     static Matrix4x4[] dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
-    static Vector4[] cascadeCullingShperes = new Vector4[maxCascades];
+    static Vector4[]
+        cascadeCullingShperes = new Vector4[maxCascades],
+        cascadeData = new Vector4[maxCascades];
 
 
     public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings settings)
@@ -98,6 +101,7 @@ public class Shadows
         buffer.SetGlobalVector(shadowDistanceFadeId, new Vector4(1.0f / settings.maxDistance, 1.0f / settings.distanceFade, 1.0f / (1 - f * f)));
         buffer.SetGlobalInt(cascadeCountId, settings.directional.cascadeCount);
         buffer.SetGlobalVectorArray(cascadeCullingSpheresId, cascadeCullingShperes);
+        buffer.SetGlobalVectorArray(cascadeDataId, cascadeData);
         buffer.SetGlobalMatrixArray(dirShadowMatricesId, dirShadowMatrices);
         buffer.EndSample(bufferName);
         ExecuteBuffer();
@@ -120,19 +124,30 @@ public class Shadows
             shadowSetting.splitData = splitData;
             if (index == 0) //每个灯光用同样的剔除球，只存一次即可
             {
-                Vector4 cullingShpere = splitData.cullingSphere;
-                cullingShpere.w *= cullingShpere.w;//预乘半径传入shader
-                cascadeCullingShperes[i] = cullingShpere;//从小球到大球传入
+                SetCascadeData(i, splitData.cullingSphere, tileSize);
             }
             int tileIndex = tileOffset + i;
             //VP矩阵固定，设置视口可以选图片局部绘制
             Vector2 offset = SetTileViewport(tileIndex, split, tileSize);
             dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, offset, split);
             buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+
+            //buffer.SetGlobalDepthBias(0f, 3f);
             ExecuteBuffer();
             context.DrawShadows(ref shadowSetting);
+            //buffer.SetGlobalDepthBias(0f, 0f);
         }
 
+    }
+
+    void SetCascadeData(int index, Vector4 cullingSphere, float tileSize)
+    {
+        //剔除球的直径除以纹理大小=纹素大小，直径是场景一共有多大
+        float texelSize = 2 * cullingSphere.w / tileSize;
+        cullingSphere.w *= cullingSphere.w;//预乘半径传入shader
+        cascadeCullingShperes[index] = cullingSphere;//从小球到大球传入
+        cascadeData[index].x = 1f / cullingSphere.w;
+        cascadeData[index].y = texelSize * 1.4142136f;//乘根号2，在最坏情况下在偏移正方形对角线长度
     }
 
     Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, int split)
