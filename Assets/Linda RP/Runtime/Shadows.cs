@@ -18,6 +18,7 @@ public class Shadows
     struct ShadowedDirectionalLight
     {
         public int visibleLightIndex;
+        public float slopeScaleBias;
     }
 
     ShadowedDirectionalLight[] shadowedDirectionalLights = new ShadowedDirectionalLight[maxShadowedDirectionalLightCount];
@@ -53,17 +54,18 @@ public class Shadows
         buffer.Clear();
     }
 
-    public Vector2 ReserveDirectionalShadows(Light light, int visibleLightIndex)
+    public Vector3 ReserveDirectionalShadows(Light light, int visibleLightIndex)
     {
         if (shadowedDirectionalLightCount < maxShadowedDirectionalLightCount && 
             light.shadows != LightShadows.None && light.shadowStrength > 0 && 
             //检测光是否照看不见的区域，并返回区别
             cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
         {
-            shadowedDirectionalLights[shadowedDirectionalLightCount] = new ShadowedDirectionalLight() { visibleLightIndex = visibleLightIndex };
-            return new Vector2(light.shadowStrength, settings.directional.cascadeCount * shadowedDirectionalLightCount++);
+            shadowedDirectionalLights[shadowedDirectionalLightCount] = 
+                new ShadowedDirectionalLight() { visibleLightIndex = visibleLightIndex, slopeScaleBias = light.shadowBias };
+            return new Vector3(light.shadowStrength, settings.directional.cascadeCount * shadowedDirectionalLightCount++, light.shadowNormalBias);
         }
-        return Vector2.zero;
+        return Vector3.zero;
     }
 
     public void Render()
@@ -132,10 +134,10 @@ public class Shadows
             dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, offset, split);
             buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
 
-            //buffer.SetGlobalDepthBias(0f, 3f);
+            buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
             ExecuteBuffer();
             context.DrawShadows(ref shadowSetting);
-            //buffer.SetGlobalDepthBias(0f, 0f);
+            buffer.SetGlobalDepthBias(0f, 0f);
         }
 
     }

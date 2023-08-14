@@ -26,6 +26,7 @@ struct DirectionalShadowData
 {
 	float strength;
 	int tileIndex;
+	float normalBias;
 };
 
 //(1 - depth / maxDistance) / fade			最大距离淡入淡出范围就是fade
@@ -76,7 +77,7 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
 	{
 		return 1.0;
 	}
-	float3 normalBias = surfaceWS.normal * _CascadeData[shadowData.cascadeIndex].y;
+	float3 normalBias = surfaceWS.normal * (directional.normalBias + _CascadeData[shadowData.cascadeIndex].y);
 	float4 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position + normalBias, 1.0));
 	positionSTS.xyz /= positionSTS.w;
 	float shadow = SampleDirectionalShadowAtlas(positionSTS.xyz);
