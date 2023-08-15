@@ -32,6 +32,7 @@ public class Shadows
         cascadeCountId = Shader.PropertyToID("_CascadeCount"),
         cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingShperes"),
         cascadeDataId = Shader.PropertyToID("_CascadeData"),
+        shadowAtlasSizeId = Shader.PropertyToID("_ShadowAtlasSize"),
         shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
     static Matrix4x4[] dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
@@ -39,6 +40,11 @@ public class Shadows
         cascadeCullingShperes = new Vector4[maxCascades],
         cascadeData = new Vector4[maxCascades];
 
+    static string[] directionalFilterKeywords = {
+        "_DIRECTIONAL_PCF3",
+        "_DIRECTIONAL_PCF5",
+        "_DIRECTIONAL_PCF7",
+    };
 
     public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings settings)
     {
@@ -106,8 +112,26 @@ public class Shadows
         buffer.SetGlobalVectorArray(cascadeCullingSpheresId, cascadeCullingShperes);
         buffer.SetGlobalVectorArray(cascadeDataId, cascadeData);
         buffer.SetGlobalMatrixArray(dirShadowMatricesId, dirShadowMatrices);
+        SetKeywords();
+        buffer.SetGlobalVector(shadowAtlasSizeId, new Vector4(altasSize, 1.0f / altasSize));
         buffer.EndSample(bufferName);
         ExecuteBuffer();
+    }
+
+    void SetKeywords()
+    {
+        int enabledIndex = (int)settings.directional.filter - 1;
+        for (int i = 0; i < directionalFilterKeywords.Length; i++)
+        {
+            if (enabledIndex == i)
+            {
+                buffer.EnableShaderKeyword(directionalFilterKeywords[i]);
+            }
+            else
+            {
+                buffer.DisableShaderKeyword(directionalFilterKeywords[i]);
+            }
+        }
     }
 
     void RenderDirectionalShadows(int index, int split, int tileSize)
@@ -147,10 +171,12 @@ public class Shadows
     {
         //剔除球的直径除以纹理大小=纹素大小，直径是场景一共有多大
         float texelSize = 2 * cullingSphere.w / tileSize;
+        float filterSize = texelSize * ((float)settings.directional.filter + 1f);//PCF会导致阴影摩尔纹，增大偏差
+        cullingSphere.w -= filterSize;//PCF增加采样范围会超出级联区域，把级联球半径变小
         cullingSphere.w *= cullingSphere.w;//预乘半径传入shader
         cascadeCullingShperes[index] = cullingSphere;//从小球到大球传入
         cascadeData[index].x = 1f / cullingSphere.w;
-        cascadeData[index].y = texelSize * 1.4142136f;//乘根号2，在最坏情况下在偏移正方形对角线长度
+        cascadeData[index].y = filterSize * 1.4142136f;//乘根号2，在最坏情况下在偏移正方形对角线长度
     }
 
     Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, int split)
