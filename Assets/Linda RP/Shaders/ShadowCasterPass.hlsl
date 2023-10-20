@@ -33,7 +33,7 @@ Varyings ShadowCasterVertex(Attributes input)
 	UNITY_TRANSFER_INSTANCE_ID(input, output);////实例化渲染ID传到片元
 	float3 positionWS = TransformObjectToWorld(input.positionOS);
 	output.positionCS = TransformWorldToHClip(positionWS);
-	//物体超出近裁剪面，阴影会被裁掉，把顶点压缩到近平面以内
+	//物体超出近裁剪面，阴影会被裁掉，把顶点压缩到近平面以内，但物体很大的时候也会有问题
 	#if UNITY_REVERSED_Z
 		output.positionCS.z = min(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
 	#else
@@ -51,8 +51,11 @@ void ShadowCasterFragment(Varyings input)
 	float4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv0);
 	float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
 	float4 base = baseMap * baseColor;
-#if defined(_CLIPPING)
+#if defined(_SHADOWS_CLIP)
 	clip(base.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff));
+#elif defined(_SHADOWS_DITHER)
+	float dither = InterleavedGradientNoise(input.positionCS.xy, 0);
+	clip(base.a - dither);
 #endif
 }
 

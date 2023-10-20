@@ -48,8 +48,26 @@ public class LindaShaderGUI : ShaderGUI
 		}
 	}
 
+	enum ShadowMode
+	{
+		On, Clip, Dither, Off
+	}
+
+	ShadowMode Shadows
+	{
+		set
+		{
+			if (SetProperty("_Shadows", (float)value))
+			{
+				SetKeyword("_SHADOWS_CLIP", value == ShadowMode.Clip);
+				SetKeyword("_SHADOWS_DITHER", value == ShadowMode.Dither);
+			}
+		}
+	}
+
 	public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
 	{
+		EditorGUI.BeginChangeCheck();
 		base.OnGUI(materialEditor, properties);
 		editor = materialEditor;
 		materials = materialEditor.targets;
@@ -63,6 +81,11 @@ public class LindaShaderGUI : ShaderGUI
 			ClipPreset();
 			FadePreset();
 			TransparentPreset();
+		}
+		//只有改变时再调用
+		if (EditorGUI.EndChangeCheck())
+		{
+			SetShadowCasterPass();
 		}
 	}
 
@@ -168,7 +191,19 @@ public class LindaShaderGUI : ShaderGUI
 		}
 	}
 
-
+	void SetShadowCasterPass()
+	{
+		MaterialProperty shadows = FindProperty("_Shadows", properties, false);
+		if (shadows == null || shadows.hasMixedValue)
+		{
+			return;
+		}
+		bool enabled = shadows.floatValue < (float)ShadowMode.Off;
+		foreach (Material m in materials)
+		{
+			m.SetShaderPassEnabled("ShadowCaster", enabled);
+		}
+	}
 
 
 

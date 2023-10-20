@@ -41,7 +41,7 @@ struct DirectionalShadowData
 {
 	float strength;
 	int tileIndex;
-	float normalBias;
+	float normalBias;//在两个物体相交会有阴影，增加斜率配置调整
 };
 
 //(1 - depth / maxDistance) / fade			最大距离淡入淡出范围就是fade
@@ -84,6 +84,15 @@ ShadowData GetShadowData(Surface surfaceWS)
 		//超出距离就不要阴影
 		data.strength = 0.0;
 	}
+#if defined(_CASCADE_BLEND_DITHER)
+	//阴影dither本质是随机切换及联阴影图块
+	else if (data.cascadeBlend < surfaceWS.dither) {
+		i += 1;
+	}
+#endif
+#if !defined(_CASCADE_BLEND_SOFT)
+	data.cascadeBlend = 1.0;
+#endif
 	data.cascadeIndex = i;
 	return data;
 }
@@ -111,6 +120,10 @@ float FilterDirectionalShadow (float3 positionSTS) {
 
 float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowData shadowData, Surface surfaceWS)
 {
+#if !defined(_RECEIVE_SHADOWS)
+	return 1.0;
+#endif
+
 	if (directional.strength <= 0.0)
 	{
 		return 1.0;
