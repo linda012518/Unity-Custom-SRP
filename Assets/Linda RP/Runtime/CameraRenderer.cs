@@ -76,7 +76,9 @@ public partial class CameraRenderer
         SortingSettings sortingSettings = new SortingSettings(camera) { criteria = SortingCriteria.CommonOpaque };
         //指定Pass LightMode=unlitShaderTagId
         DrawingSettings drawingSettings = 
-            new DrawingSettings(unlitShaderTagId, sortingSettings) { enableDynamicBatching = useDynamicBatching, enableInstancing = useGPUInstancing };
+            new DrawingSettings(unlitShaderTagId, sortingSettings) { enableDynamicBatching = useDynamicBatching, enableInstancing = useGPUInstancing, 
+                perObjectData = PerObjectData.Lightmaps //给每个物体生成光照图UV
+            };
         drawingSettings.SetShaderPassName(1, litShaderTagId);
 
         FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
