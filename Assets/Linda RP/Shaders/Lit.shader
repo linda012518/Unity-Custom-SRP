@@ -18,6 +18,11 @@ Shader "Linda RP/Lit"
 
 	SubShader
 	{
+		HLSLINCLUDE
+		#include "../ShaderLibrary/Common.hlsl"
+		#include "LitInput.hlsl"
+		ENDHLSL
+
 		Pass
 		{
 			Tags { "LightMode" = "LindaLit" }
@@ -51,6 +56,8 @@ Shader "Linda RP/Lit"
 		Pass
 		{
 			Tags { "LightMode" = "ShadowCaster" }
+
+			ColorMask 0
 
 			HLSLPROGRAM
 

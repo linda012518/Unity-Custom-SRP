@@ -1,24 +1,12 @@
 #ifndef Linda_Lit_Pass
 #define Linda_Lit_Pass
 
-#include "../ShaderLibrary/Common.hlsl"
 #include "../ShaderLibrary/Surface.hlsl"
 #include "../ShaderLibrary/Shadows.hlsl"
 #include "../ShaderLibrary/Light.hlsl"
 #include "../ShaderLibrary/BRDF.hlsl"
 #include "../ShaderLibrary/GI.hlsl"
 #include "../ShaderLibrary/Lighting.hlsl"
-
-TEXTURE2D(_BaseMap);
-SAMPLER(sampler_BaseMap);
-
-UNITY_INSTANCING_BUFFER_START(UnityPerMaterial) //CBUFFER_STARTπÃ∂®–¥∑®”√UnityPerMaterial
-	UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
-	UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
-	UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff)
-	UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
-	UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
-UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 struct Attributes
 {
@@ -47,8 +35,7 @@ Varyings LitPassVertex(Attributes input)
 	TRANSFER_GI_DATA(input, output);
 	output.positionWS = TransformObjectToWorld(input.positionOS);
 	output.positionCS = TransformWorldToHClip(output.positionWS);
-	float4 baseST = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST);
-	output.uv0 = input.uv0 * baseST.xy + baseST.zw;
+	output.uv0 = TransformBaseUV(input.uv0);
 	output.normalWS = TransformObjectToWorldNormal(input.normalOS);
 	return output;
 }
@@ -56,11 +43,9 @@ Varyings LitPassVertex(Attributes input)
 float4 LitPassFragment(Varyings input) : SV_TARGET
 {
 	UNITY_SETUP_INSTANCE_ID(input);
-	float4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv0);
-	float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
-	float4 base = baseMap * baseColor;
+	float4 base = GetBase(input.uv0);
 #if defined(_CLIPPING)
-	clip(base.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff));
+	clip(base.a - GetCutoff(input.uv0));
 #endif
 
 	Surface surface;
@@ -69,8 +54,8 @@ float4 LitPassFragment(Varyings input) : SV_TARGET
 	surface.depth = -TransformWorldToView(input.positionWS).z;
 	surface.color = base.rgb;
 	surface.alpha = base.a;
-	surface.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
-	surface.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
+	surface.metallic = GetMetallic(input.uv0);
+	surface.smoothness = GetSmoothness(input.uv0);
 	surface.viewDirection = normalize(_WorldSpaceCameraPos - input.positionWS);
 	surface.dither = InterleavedGradientNoise(input.positionCS.xy, 0);
 

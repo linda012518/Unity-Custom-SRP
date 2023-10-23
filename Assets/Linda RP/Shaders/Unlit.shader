@@ -14,6 +14,11 @@ Shader "Linda RP/Unlit"
 
 	SubShader
 	{
+		HLSLINCLUDE
+		#include "../ShaderLibrary/Common.hlsl"
+		#include "LitInput.hlsl"
+		ENDHLSL
+
 		Pass
 		{
 			Blend [_SrcBlend] [_DstBlend]
@@ -34,6 +39,8 @@ Shader "Linda RP/Unlit"
 		Pass
 		{
 			Tags { "LightMode" = "ShadowCaster" }
+
+			ColorMask 0
 
 			HLSLPROGRAM
 
