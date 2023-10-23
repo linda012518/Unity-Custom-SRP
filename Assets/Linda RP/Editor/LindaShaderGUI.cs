@@ -73,7 +73,9 @@ public class LindaShaderGUI : ShaderGUI
 		materials = materialEditor.targets;
 		this.properties = properties;
 
-		EditorGUILayout.Space();
+        BakedEmission();
+
+        EditorGUILayout.Space();
 		showPresets = EditorGUILayout.Foldout(showPresets, "Presets", true);
 		if (showPresets)
 		{
@@ -86,6 +88,20 @@ public class LindaShaderGUI : ShaderGUI
 		if (EditorGUI.EndChangeCheck())
 		{
 			SetShadowCasterPass();
+		}
+	}
+
+	//×Ô¶¯ºæ±º
+	void BakedEmission()
+	{
+		EditorGUI.BeginChangeCheck();
+		editor.LightmapEmissionProperty();
+		if (EditorGUI.EndChangeCheck())
+		{
+			foreach (Material m in editor.targets)
+			{
+				m.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+			}
 		}
 	}
 

@@ -10,6 +10,8 @@ Shader "Linda RP/Lit"
 		[KeywordEnum(On, Clip, Dither, Off)] _Shadows ("Shadows", Float) = 0
 		_Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
 		_Smoothness ("Smoothness", Range(0.0, 1.0)) = 0.5
+		[NoScaleOffset] _EmissionMap("Emission", 2D) = "white" {}
+		[HDR] _EmissionColor("Emission", Color) = (0.0, 0.0, 0.0, 0.0)
 		[Toggle(_PREMULTIPLY_ALPHA)] _PremulAlpha ("Premultiply Alpha", Float) = 0
 		[Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Float) = 1.0
 		[Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Float) = 0.0
@@ -76,7 +78,7 @@ Shader "Linda RP/Lit"
 		}
 
 		Pass {
-			Tags { "LightMode" = "Meta" }
+			Tags { "LightMode" = "Meta" } //烘焙元数据，主要是漫反射率，镜面反射不能烘light map，主要反回漫反射率
 
 			Cull Off
 
