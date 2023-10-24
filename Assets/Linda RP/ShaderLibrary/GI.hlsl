@@ -80,7 +80,8 @@ float4 SampleBakedShadows (float2 lightMapUV) {
 	#if defined(LIGHTMAP_ON)
 		return SAMPLE_TEXTURE2D(unity_ShadowMask, samplerunity_ShadowMask, lightMapUV);
 	#else
-		return 1.0;
+		//动态物体采样光照探针阴影，有阴影是青色，没有是白色
+		return unity_ProbesOcclusion;
 	#endif
 }
 

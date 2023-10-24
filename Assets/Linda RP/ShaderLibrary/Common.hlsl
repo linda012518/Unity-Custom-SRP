@@ -14,6 +14,10 @@
 #define UNITY_PREV_MATRIX_M		unity_MatrixPreviousM
 #define UNITY_PREV_MATRIX_I_M	unity_MatrixPreviousMI
 
+#if defined(_SHADOW_MASK_DISTANCE)
+	#define SHADOWS_SHADOWMASK //动态物体采光照探针阴影会破坏实例渲染，加宏开启遮挡数据实例渲染
+#endif
+
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
 

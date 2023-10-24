@@ -77,7 +77,7 @@ public partial class CameraRenderer
         //指定Pass LightMode=unlitShaderTagId
         DrawingSettings drawingSettings = 
             new DrawingSettings(unlitShaderTagId, sortingSettings) { enableDynamicBatching = useDynamicBatching, enableInstancing = useGPUInstancing, 
-                perObjectData = PerObjectData.Lightmaps | PerObjectData.ShadowMask | PerObjectData.LightProbe | PerObjectData.LightProbeProxyVolume //给每个物体生成光照图UV
+                perObjectData = PerObjectData.Lightmaps | PerObjectData.ShadowMask | PerObjectData.LightProbe | PerObjectData.OcclusionProbe | PerObjectData.LightProbeProxyVolume //给每个物体生成光照图UV
             };
         drawingSettings.SetShaderPassName(1, litShaderTagId);
 
