@@ -23,6 +23,9 @@ public class MeshBall : MonoBehaviour
 
     MaterialPropertyBlock block;
 
+    [SerializeField]
+    LightProbeProxyVolume lightProbeVolume = null;
+
     private void Awake()
     {
         for (int i = 0; i < matrices.Length; i++)
@@ -43,18 +46,23 @@ public class MeshBall : MonoBehaviour
             block.SetFloatArray(metallicId, metallic);
             block.SetFloatArray(smoothnessId, smoothness);
 
-            var positions = new Vector3[1023];
-            for (int i = 0; i < matrices.Length; i++)
+            if (!lightProbeVolume)
             {
-                positions[i] = matrices[i].GetColumn(3);
+                var positions = new Vector3[1023];
+                for (int i = 0; i < matrices.Length; i++)
+                {
+                    positions[i] = matrices[i].GetColumn(3);
+                }
+                var lightProbes = new SphericalHarmonicsL2[1023];
+                LightProbes.CalculateInterpolatedLightAndOcclusionProbes(positions, lightProbes, null);
+                block.CopySHCoefficientArraysFrom(lightProbes);
             }
-            var lightProbes = new SphericalHarmonicsL2[1023];
-            LightProbes.CalculateInterpolatedLightAndOcclusionProbes(positions, lightProbes, null);
-            block.CopySHCoefficientArraysFrom(lightProbes);
         }
 
         Graphics.DrawMeshInstanced(mesh, 0, material, matrices, 1023, block, 
-            ShadowCastingMode.On, true, 0, null, LightProbeUsage.CustomProvided); //动态生成物体使用光照探针
+            ShadowCastingMode.On, true, 0, null, 
+            lightProbeVolume ? LightProbeUsage.UseProxyVolume : LightProbeUsage.CustomProvided, 
+            lightProbeVolume); //动态生成物体使用光照探针
     }
 
 
