@@ -51,6 +51,12 @@ public class Shadows
         "_CASCADE_BLEND_DITHER"
     };
 
+    static string[] shadowMaskKeywords = {
+        "_SHADOW_MASK_DISTANCE"
+    };
+
+    bool useShadowMask;
+
     public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings settings)
     {
         this.context = context;
@@ -58,6 +64,7 @@ public class Shadows
         this.settings = settings;
 
         shadowedDirectionalLightCount = 0;
+        useShadowMask = false;
     }
 
     void ExecuteBuffer()
@@ -73,6 +80,12 @@ public class Shadows
             //检测光是否照看不见的区域，并返回区别
             cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
         {
+            LightBakingOutput lightBaking = light.bakingOutput;
+            if (lightBaking.lightmapBakeType == LightmapBakeType.Mixed && lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask)
+            {
+                useShadowMask = true;
+            }
+
             shadowedDirectionalLights[shadowedDirectionalLightCount] = 
                 new ShadowedDirectionalLight() { visibleLightIndex = visibleLightIndex, slopeScaleBias = light.shadowBias, nearPlaneOffset = light.shadowNearPlane };
             return new Vector3(light.shadowStrength, settings.directional.cascadeCount * shadowedDirectionalLightCount++, light.shadowNormalBias);
@@ -91,6 +104,11 @@ public class Shadows
             //不声明纹理会在 WebGL 2.0 报错，设置1x1纹理容错
             buffer.GetTemporaryRT(dirShadowAltasId, 1, 1, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
         }
+
+        buffer.BeginSample(bufferName);
+        SetKeywords(shadowMaskKeywords, useShadowMask ? 0 : -1);
+        buffer.EndSample(bufferName);
+        ExecuteBuffer();
     }
 
     void RenderDirectionalShadows()

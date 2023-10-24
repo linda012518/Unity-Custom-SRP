@@ -30,11 +30,17 @@ CBUFFER_START(_LindaShadows)
 	float4x4 _DirectionalShadowMatrices[Max_Shadowed_Directional_Light_Count * Max_Cascade_Count];
 CBUFFER_END
 
+struct ShadowMask {
+	bool distance;
+	float4 shadows;
+};
+
 struct ShadowData
 {
 	int cascadeIndex;
 	float strength;
 	float cascadeBlend;
+	ShadowMask shadowMask;
 };
 
 struct DirectionalShadowData
@@ -53,6 +59,8 @@ float FadedShadowStrength (float distance, float scale, float fade) {
 ShadowData GetShadowData(Surface surfaceWS)
 {
 	ShadowData data;
+	data.shadowMask.distance = false;
+	data.shadowMask.shadows = 1.0;
 	////对比最大距离和深度，超过最大距离给0，不要阴影
 	//data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;
 	//最大距离淡入淡出阴影边
