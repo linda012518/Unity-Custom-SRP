@@ -76,12 +76,23 @@ float3 SampleLightProbe (Surface surfaceWS) {
 	#endif
 }
 
-float4 SampleBakedShadows (float2 lightMapUV) {
+float4 SampleBakedShadows (float2 lightMapUV, Surface surfaceWS) {
 	#if defined(LIGHTMAP_ON)
 		return SAMPLE_TEXTURE2D(unity_ShadowMask, samplerunity_ShadowMask, lightMapUV);
 	#else
-		//动态物体采样光照探针阴影，有阴影是青色，没有是白色
-		return unity_ProbesOcclusion;
+		//采样LPPV
+		if (unity_ProbeVolumeParams.x) {
+			return SampleProbeOcclusion(
+				TEXTURE3D_ARGS(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
+				surfaceWS.position, unity_ProbeVolumeWorldToObject,
+				unity_ProbeVolumeParams.y, unity_ProbeVolumeParams.z,
+				unity_ProbeVolumeMin.xyz, unity_ProbeVolumeSizeInv.xyz
+			);
+		}
+		else {
+			//动态物体采样光照探针阴影，有阴影是青色，没有是白色
+			return unity_ProbesOcclusion;
+		}
 	#endif
 }
 
@@ -94,7 +105,7 @@ GI GetGI(float2 lightMapUV, Surface surfaceWS)
 
 	#if defined(_SHADOW_MASK_DISTANCE)
 		gi.shadowMask.distance = true;
-		gi.shadowMask.shadows = SampleBakedShadows(lightMapUV);
+		gi.shadowMask.shadows = SampleBakedShadows(lightMapUV, surfaceWS);
 	#endif
 
 	return gi;
