@@ -43,6 +43,13 @@ Varyings LitPassVertex(Attributes input)
 float4 LitPassFragment(Varyings input) : SV_TARGET
 {
 	UNITY_SETUP_INSTANCE_ID(input);
+
+//#if defined(LOD_FADE_CROSSFADE)
+//	return unity_LODFade.x; //查看LOD值不要勾选Animate Cross-fading
+//#endif
+
+	ClipLOD(input.positionCS.xy, unity_LODFade.x);
+
 	float4 base = GetBase(input.uv0);
 #if defined(_CLIPPING)
 	clip(base.a - GetCutoff(input.uv0));
