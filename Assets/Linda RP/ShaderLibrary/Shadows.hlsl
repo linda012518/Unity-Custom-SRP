@@ -126,19 +126,11 @@ float FilterDirectionalShadow (float3 positionSTS) {
 	#endif
 }
 
-float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowData shadowData, Surface surfaceWS)
+float GetCascadedShadow (DirectionalShadowData directional, ShadowData shadowData, Surface surfaceWS) 
 {
-#if !defined(_RECEIVE_SHADOWS)
-	return 1.0;
-#endif
-
-	if (directional.strength <= 0.0)
-	{
-		return 1.0;
-	}
 	float3 normalBias = surfaceWS.normal * (directional.normalBias * _CascadeData[shadowData.cascadeIndex].y);
 	float4 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position + normalBias, 1.0));
-	positionSTS.xyz /= positionSTS.w;
+	//positionSTS.xyz /= positionSTS.w; //这里不能除w，否则远处会变黑，待研究
 	float shadow = FilterDirectionalShadow(positionSTS.xyz);
 	//如果小于1，则处理阴影级联过渡区，从下个级联采样差值
 	if (shadowData.cascadeBlend < 1.0) {
@@ -147,7 +139,50 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
 		shadow = lerp(FilterDirectionalShadow(positionSTS.xyz), shadow, shadowData.cascadeBlend);
 	}
 
-	return lerp(1.0, shadow, directional.strength);
+	return shadow;
+}
+
+float GetBakedShadow(ShadowMask mask)
+{
+	float shadow = 1.0;
+	if (mask.distance) 
+	{ 
+		shadow = mask.shadows.r;
+	}
+	return shadow;
+}
+
+float MixBakedAndRealtimeShadows(ShadowData shadowData, float shadow, float strength)
+{
+	float baked = GetBakedShadow(shadowData.shadowMask);
+	if (shadowData.shadowMask.distance) 
+	{ 
+		shadow = lerp(baked, shadow, shadowData.strength);
+		return lerp(1.0, shadow, strength);
+	}
+	return lerp(1.0, shadow, strength * shadowData.strength);
+}
+
+float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowData shadowData, Surface surfaceWS)
+{
+#if !defined(_RECEIVE_SHADOWS)
+	return 1.0;
+#endif
+	
+	float shadow;
+
+	if (directional.strength <= 0.0)
+	{
+		shadow = 1.0;
+	}
+	else
+	{
+		shadow = GetCascadedShadow(directional, shadowData, surfaceWS);
+		shadow = MixBakedAndRealtimeShadows(shadowData, shadow, directional.strength);
+	}
+
+
+	return shadow;
 }
 
 #endif
