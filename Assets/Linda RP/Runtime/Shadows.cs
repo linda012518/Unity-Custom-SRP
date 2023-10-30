@@ -76,14 +76,18 @@ public class Shadows
     public Vector3 ReserveDirectionalShadows(Light light, int visibleLightIndex)
     {
         if (shadowedDirectionalLightCount < maxShadowedDirectionalLightCount && 
-            light.shadows != LightShadows.None && light.shadowStrength > 0 && 
-            //检测光是否照看不见的区域，并返回区别
-            cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
+            light.shadows != LightShadows.None && light.shadowStrength > 0)
         {
             LightBakingOutput lightBaking = light.bakingOutput;
             if (lightBaking.lightmapBakeType == LightmapBakeType.Mixed && lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask)
             {
                 useShadowMask = true;
+            }
+
+            //检测光是否照看不见的区域，并返回区别，超出距离也会认为没有没有光照阴影，放到后边执行，先执行 useShadowMask
+            if (!cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
+            {
+                return new Vector3(light.shadowStrength, 0f, 0f);
             }
 
             shadowedDirectionalLights[shadowedDirectionalLightCount] = 

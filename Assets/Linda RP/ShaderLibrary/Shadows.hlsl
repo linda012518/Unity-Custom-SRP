@@ -152,6 +152,15 @@ float GetBakedShadow(ShadowMask mask)
 	return shadow;
 }
 
+float GetBakedShadow(ShadowMask mask, float strength)
+{
+	if (mask.distance) 
+	{ 
+		return lerp(1.0, GetBakedShadow(mask), strength);
+	}
+	return 1.0;
+}
+
 float MixBakedAndRealtimeShadows(ShadowData shadowData, float shadow, float strength)
 {
 	float baked = GetBakedShadow(shadowData.shadowMask);
@@ -171,9 +180,9 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
 	
 	float shadow;
 
-	if (directional.strength <= 0.0)
+	if (directional.strength * shadowData.strength <= 0.0)
 	{
-		shadow = 1.0;
+		shadow = GetBakedShadow(shadowData.shadowMask, directional.strength);
 	}
 	else
 	{
