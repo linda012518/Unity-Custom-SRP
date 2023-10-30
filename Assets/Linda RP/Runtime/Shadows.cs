@@ -74,28 +74,31 @@ public class Shadows
         buffer.Clear();
     }
 
-    public Vector3 ReserveDirectionalShadows(Light light, int visibleLightIndex)
+    public Vector4 ReserveDirectionalShadows(Light light, int visibleLightIndex)
     {
         if (shadowedDirectionalLightCount < maxShadowedDirectionalLightCount && 
             light.shadows != LightShadows.None && light.shadowStrength > 0)
         {
+            float maskChannel = -1;
+
             LightBakingOutput lightBaking = light.bakingOutput;
             if (lightBaking.lightmapBakeType == LightmapBakeType.Mixed && lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask)
             {
                 useShadowMask = true;
+                maskChannel = lightBaking.occlusionMaskChannel;
             }
 
             //检测光是否照看不见的区域，并返回区别，超出距离也会认为没有没有光照阴影，放到后边执行，先执行 useShadowMask
             if (!cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
             {
-                return new Vector3(light.shadowStrength, 0f, 0f);
+                return new Vector4(light.shadowStrength, 0f, 0f, maskChannel);
             }
 
             shadowedDirectionalLights[shadowedDirectionalLightCount] = 
                 new ShadowedDirectionalLight() { visibleLightIndex = visibleLightIndex, slopeScaleBias = light.shadowBias, nearPlaneOffset = light.shadowNearPlane };
-            return new Vector3(light.shadowStrength, settings.directional.cascadeCount * shadowedDirectionalLightCount++, light.shadowNormalBias);
+            return new Vector4(light.shadowStrength, settings.directional.cascadeCount * shadowedDirectionalLightCount++, light.shadowNormalBias, maskChannel);
         }
-        return Vector3.zero;
+        return new Vector4(0f, 0f, 0f, -1f);
     }
 
     public void Render()

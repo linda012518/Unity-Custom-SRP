@@ -49,6 +49,7 @@ struct DirectionalShadowData
 	float strength;
 	int tileIndex;
 	float normalBias;//在两个物体相交会有阴影，增加斜率配置调整
+	int shadowMaskChannel;
 };
 
 //(1 - depth / maxDistance) / fade			最大距离淡入淡出范围就是fade
@@ -144,28 +145,31 @@ float GetCascadedShadow (DirectionalShadowData directional, ShadowData shadowDat
 	return shadow;
 }
 
-float GetBakedShadow(ShadowMask mask)
+float GetBakedShadow(ShadowMask mask, int channel)
 {
 	float shadow = 1.0;
 	if (mask.always || mask.distance) 
 	{ 
-		shadow = mask.shadows.r;
+		if (channel >= 0) 
+		{ 
+			shadow = mask.shadows[channel];
+		}
 	}
 	return shadow;
 }
 
-float GetBakedShadow(ShadowMask mask, float strength)
+float GetBakedShadow(ShadowMask mask, int channel, float strength)
 {
 	if (mask.always || mask.distance) 
 	{ 
-		return lerp(1.0, GetBakedShadow(mask), strength);
+		return lerp(1.0, GetBakedShadow(mask, channel), strength);
 	}
 	return 1.0;
 }
 
-float MixBakedAndRealtimeShadows(ShadowData shadowData, float shadow, float strength)
+float MixBakedAndRealtimeShadows(ShadowData shadowData, float shadow, int shadowMaskChannel, float strength)
 {
-	float baked = GetBakedShadow(shadowData.shadowMask);
+	float baked = GetBakedShadow(shadowData.shadowMask, shadowMaskChannel);
 	//适配ShadowMask阴影模式，静态物体没有实时阴影
 	if (shadowData.shadowMask.always) 
 	{
@@ -193,12 +197,12 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
 
 	if (directional.strength * shadowData.strength <= 0.0)
 	{
-		shadow = GetBakedShadow(shadowData.shadowMask, directional.strength);
+		shadow = GetBakedShadow(shadowData.shadowMask, directional.shadowMaskChannel, directional.strength);
 	}
 	else
 	{
 		shadow = GetCascadedShadow(directional, shadowData, surfaceWS);
-		shadow = MixBakedAndRealtimeShadows(shadowData, shadow, directional.strength);
+		shadow = MixBakedAndRealtimeShadows(shadowData, shadow, directional.shadowMaskChannel, directional.strength);
 	}
 
 
