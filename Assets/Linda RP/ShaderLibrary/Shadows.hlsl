@@ -31,6 +31,7 @@ CBUFFER_START(_LindaShadows)
 CBUFFER_END
 
 struct ShadowMask {
+	bool always;
 	bool distance;
 	float4 shadows;
 };
@@ -59,6 +60,7 @@ float FadedShadowStrength (float distance, float scale, float fade) {
 ShadowData GetShadowData(Surface surfaceWS)
 {
 	ShadowData data;
+	data.shadowMask.always = false;
 	data.shadowMask.distance = false;
 	data.shadowMask.shadows = 1.0;
 	////对比最大距离和深度，超过最大距离给0，不要阴影
@@ -145,7 +147,7 @@ float GetCascadedShadow (DirectionalShadowData directional, ShadowData shadowDat
 float GetBakedShadow(ShadowMask mask)
 {
 	float shadow = 1.0;
-	if (mask.distance) 
+	if (mask.always || mask.distance) 
 	{ 
 		shadow = mask.shadows.r;
 	}
@@ -154,7 +156,7 @@ float GetBakedShadow(ShadowMask mask)
 
 float GetBakedShadow(ShadowMask mask, float strength)
 {
-	if (mask.distance) 
+	if (mask.always || mask.distance) 
 	{ 
 		return lerp(1.0, GetBakedShadow(mask), strength);
 	}
@@ -164,6 +166,15 @@ float GetBakedShadow(ShadowMask mask, float strength)
 float MixBakedAndRealtimeShadows(ShadowData shadowData, float shadow, float strength)
 {
 	float baked = GetBakedShadow(shadowData.shadowMask);
+	//适配ShadowMask阴影模式，静态物体没有实时阴影
+	if (shadowData.shadowMask.always) 
+	{
+		//先取时实阴影，再取烘焙阴影对比哪个阴影深用哪个
+		shadow = lerp(1.0, shadow, shadowData.strength);
+		shadow = min(baked, shadow);
+		return lerp(1.0, shadow, strength);
+	}
+	//适配Distance ShadowMask阴影模式，动静物体都有实时阴影，通过距离判断静态物体用实时或烘焙
 	if (shadowData.shadowMask.distance) 
 	{ 
 		shadow = lerp(baked, shadow, shadowData.strength);

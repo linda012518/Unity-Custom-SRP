@@ -52,7 +52,8 @@ public class Shadows
     };
 
     static string[] shadowMaskKeywords = {
-        "_SHADOW_MASK_DISTANCE"
+        "_SHADOW_MASK_ALWAYS",  //适配ShadowMask阴影模式，静态物体没有实时阴影
+        "_SHADOW_MASK_DISTANCE" //适配Distance ShadowMask阴影模式，动静物体都有实时阴影，通过距离判断静态物体用实时或烘焙
     };
 
     bool useShadowMask;
@@ -110,7 +111,7 @@ public class Shadows
         }
 
         buffer.BeginSample(bufferName);
-        SetKeywords(shadowMaskKeywords, useShadowMask ? 0 : -1);
+        SetKeywords(shadowMaskKeywords, useShadowMask ? QualitySettings.shadowmaskMode == ShadowmaskMode.Shadowmask ? 0 : 1 : -1);
         buffer.EndSample(bufferName);
         ExecuteBuffer();
     }
