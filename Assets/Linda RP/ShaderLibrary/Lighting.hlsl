@@ -23,6 +23,13 @@ float3 GetLighting(Surface surface, BRDF brdf, GI gi)
 		Light light = GetDirectionalLight(i, surface, data);
 		color += GetLighting(surface, brdf, light);
 	}
+
+	for (int n = 0; n < GetOtherLightCount(); n++)
+	{
+		Light light = GetOtherLight(n, surface, data);
+		color += GetLighting(surface, brdf, light);
+	}
+
 	return color;
 }
 
