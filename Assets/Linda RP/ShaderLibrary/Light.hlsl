@@ -13,6 +13,7 @@ CBUFFER_START(_LindaLight)
 	int _OtherLightCount;
 	float4 _OtherLightColors[Max_Other_Light_Count];
 	float4 _OtherLightPositions[Max_Other_Light_Count];
+	float4 _OtherLightDirections[Max_Other_Light_Count];
 CBUFFER_END
 
 struct Light {
@@ -52,13 +53,18 @@ Light GetDirectionalLight(int index, Surface surfaceWS, ShadowData shadowData)
 	return light; 
 }
 
+//点光源衰减(但所有物体都会计算)： 强度 / 距离平方
+//点光源强度衰减：(max(0, 1 - (距离平方/半径平方) * (距离平方/半径平方)))平方
+//半径平方倒数在CPU逻辑预计算，存位置W分量
 Light GetOtherLight(int index, Surface surfaceWS, ShadowData shadowData)
 {
 	Light light;
 	light.color = _OtherLightColors[index].xyz;
 	float3 ray = _OtherLightPositions[index].xyz - surfaceWS.position;
 	light.direction = normalize(ray);
-	light.attenuation = 1.0;
+	float distanceSqr = max(dot(ray, ray), 0.00001);
+	float rangeAttenuation = Square(saturate(1.0 - Square(distanceSqr * _OtherLightPositions[index].w)));
+	light.attenuation = rangeAttenuation / distanceSqr;
 	return light; 
 }
 

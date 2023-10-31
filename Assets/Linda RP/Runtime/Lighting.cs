@@ -24,11 +24,13 @@ public class Lighting
     static int
         otherLightCountId = Shader.PropertyToID("_OtherLightCount"),
         otherLightColorsId = Shader.PropertyToID("_OtherLightColors"),
-        otherLightPositionsId = Shader.PropertyToID("_OtherLightPositions");
+        otherLightPositionsId = Shader.PropertyToID("_OtherLightPositions"),
+        otherLightDirectionsId = Shader.PropertyToID("_OtherLightDirections");
 
     static Vector4[]
         otherLightColors = new Vector4[maxOtherLightCount],
-        otherLightPositions = new Vector4[maxOtherLightCount];
+        otherLightPositions = new Vector4[maxOtherLightCount],
+        otherLightDirections = new Vector4[maxOtherLightCount];
 
     CullingResults cullingResults;
 
@@ -59,6 +61,8 @@ public class Lighting
             switch (visibleLight.lightType)
             {
                 case LightType.Spot:
+                    if (otherLightCount < maxOtherLightCount)
+                        SetupSpotLight(otherLightCount++, ref visibleLight);
                     break;
                 case LightType.Directional:
                     if (dirLightCount < maxDirLightCount)
@@ -84,6 +88,7 @@ public class Lighting
         {
             buffer.SetGlobalVectorArray(otherLightColorsId, otherLightColors);
             buffer.SetGlobalVectorArray(otherLightPositionsId, otherLightPositions);
+            buffer.SetGlobalVectorArray(otherLightDirectionsId, otherLightDirections);
         }
     }
     void SetupDirectionalLight(int index, ref VisibleLight light)
@@ -97,9 +102,21 @@ public class Lighting
     void SetupPointLight(int index, ref VisibleLight light)
     {
         otherLightColors[index] = light.finalColor;
-        otherLightPositions[index] = light.localToWorldMatrix.GetColumn(3);
+        Vector4 position = light.localToWorldMatrix.GetColumn(3);
+        //计算半径平方倒数，shader减少计算量
+        position.w = 1.0f / Mathf.Max(light.range * light.range, 0.00001f);
+        otherLightPositions[index] = position;
     }
 
+    void SetupSpotLight(int index, ref VisibleLight light)
+    {
+        otherLightColors[index] = light.finalColor;
+        Vector4 position = light.localToWorldMatrix.GetColumn(3);
+        //计算半径平方倒数，shader减少计算量
+        position.w = 1f / Mathf.Max(light.range * light.range, 0.00001f);
+        otherLightPositions[index] = position;
+        otherLightDirections[index] = -light.localToWorldMatrix.GetColumn(2);
+    }
 
     public void Cleanup()
     {
