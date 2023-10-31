@@ -131,13 +131,13 @@ float FilterDirectionalShadow (float3 positionSTS) {
 
 float GetCascadedShadow (DirectionalShadowData directional, ShadowData shadowData, Surface surfaceWS) 
 {
-	float3 normalBias = surfaceWS.normal * (directional.normalBias * _CascadeData[shadowData.cascadeIndex].y);
+	float3 normalBias = surfaceWS.interpolatedNormal * (directional.normalBias * _CascadeData[shadowData.cascadeIndex].y);
 	float4 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position + normalBias, 1.0));
 	//positionSTS.xyz /= positionSTS.w; //这里不能除w，否则远处会变黑，待研究
 	float shadow = FilterDirectionalShadow(positionSTS.xyz);
 	//如果小于1，则处理阴影级联过渡区，从下个级联采样差值
 	if (shadowData.cascadeBlend < 1.0) {
-		normalBias = surfaceWS.normal *(directional.normalBias * _CascadeData[shadowData.cascadeIndex + 1].y);
+		normalBias = surfaceWS.interpolatedNormal *(directional.normalBias * _CascadeData[shadowData.cascadeIndex + 1].y);
 		positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex + 1], float4(surfaceWS.position + normalBias, 1.0));
 		shadow = lerp(FilterDirectionalShadow(positionSTS.xyz), shadow, shadowData.cascadeBlend);
 	}

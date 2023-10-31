@@ -5,11 +5,13 @@ struct Surface
 {
 	float3 position;
 	float3 normal;
+	float3 interpolatedNormal;
 	float3 viewDirection;
 	float depth;//观察空间深度
 	float3 color;
 	float alpha;
 	float metallic;
+	float occlusion;
 	float smoothness;
 	float fresnelStrength;
 	float dither;

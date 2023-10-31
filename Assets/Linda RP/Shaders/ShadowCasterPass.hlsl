@@ -39,9 +39,11 @@ void ShadowCasterFragment(Varyings input)
 
 	ClipLOD(input.positionCS.xy, unity_LODFade.x);
 
-	float4 base = GetBase(input.uv0);
+	InputConfig config = GetInputConfig(input.uv0);
+
+	float4 base = GetBase(config);
 #if defined(_SHADOWS_CLIP)
-	clip(base.a - GetCutoff(input.uv0));
+	clip(base.a - GetCutoff(config));
 #elif defined(_SHADOWS_DITHER)
 	float dither = InterleavedGradientNoise(input.positionCS.xy, 0);
 	clip(base.a - dither);

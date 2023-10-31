@@ -60,7 +60,7 @@ float3 IndirectBRDF(Surface surface, BRDF brdf, float diffuse, float specular)
 	float3 reflection = specular * lerp(brdf.specular, brdf.fresnel, fresnelStrength);
 	reflection /= brdf.roughness * brdf.roughness + 1.0;
 
-	return indirectDiffuse + reflection;
+	return (indirectDiffuse + reflection) * surface.occlusion;
 }
 
 #endif
