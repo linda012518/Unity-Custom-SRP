@@ -15,6 +15,8 @@ struct Varyings
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
+bool _ShadowPancaking;
+
 Varyings ShadowCasterVertex(Attributes input)
 {
 	Varyings output;
@@ -23,12 +25,14 @@ Varyings ShadowCasterVertex(Attributes input)
 	float3 positionWS = TransformObjectToWorld(input.positionOS);
 	output.positionCS = TransformWorldToHClip(positionWS);
 	//物体超出近裁剪面，阴影会被裁掉，把顶点压缩到近平面以内，但物体很大的时候也会有问题
-	#if UNITY_REVERSED_Z
-		output.positionCS.z = min(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
-	#else
-		output.positionCS.z = max(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
-	#endif
-
+	if (_ShadowPancaking)
+	{
+		#if UNITY_REVERSED_Z
+			output.positionCS.z = min(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
+		#else
+			output.positionCS.z = max(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
+		#endif
+	}
 	output.uv0 = TransformBaseUV(input.uv0);
 	return output;
 }

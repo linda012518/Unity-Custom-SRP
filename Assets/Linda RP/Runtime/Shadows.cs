@@ -44,7 +44,8 @@ public class Shadows
         cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingShperes"),
         cascadeDataId = Shader.PropertyToID("_CascadeData"),
         shadowAtlasSizeId = Shader.PropertyToID("_ShadowAtlasSize"),
-        shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
+        shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade"),
+        shadowPancakingId = Shader.PropertyToID("_ShadowPancaking");//处理穿过裁剪面的物体阴影，只有平行光要，其它光不需要
 
     static Matrix4x4[] dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
     static Matrix4x4[] otherShadowMatrices = new Matrix4x4[maxShadowedOtherLightCount];
@@ -200,6 +201,7 @@ public class Shadows
         buffer.GetTemporaryRT(dirShadowAltasId, altasSize, altasSize, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
         buffer.SetRenderTarget(dirShadowAltasId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
         buffer.ClearRenderTarget(true, false, Color.clear);
+        buffer.SetGlobalFloat(shadowPancakingId, 1f);
         buffer.BeginSample(bufferName);
         ExecuteBuffer();
 
@@ -231,6 +233,7 @@ public class Shadows
         buffer.GetTemporaryRT(otherShadowAtlasId, altasSize, altasSize, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
         buffer.SetRenderTarget(otherShadowAtlasId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
         buffer.ClearRenderTarget(true, false, Color.clear);
+        buffer.SetGlobalFloat(shadowPancakingId, 0f);
         buffer.BeginSample(bufferName);
         ExecuteBuffer();
 
