@@ -88,7 +88,7 @@ public class Shadows
                 maskChannel = lightBaking.occlusionMaskChannel;
             }
 
-            //检测光是否照看不见的区域，并返回区别，超出距离也会认为没有没有光照阴影，放到后边执行，先执行 useShadowMask
+            //检测光是否照看不见的区域，并返回区别，超出距离也会认为没有实时光照阴影用烘焙的，放到后边执行，先执行 useShadowMask
             if (!cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
             {
                 return new Vector4(light.shadowStrength, 0f, 0f, maskChannel);
@@ -100,6 +100,21 @@ public class Shadows
         }
         return new Vector4(0f, 0f, 0f, -1f);
     }
+
+    public Vector4 ReserveOtherShadows(Light light, int visibleLightIndex)
+    {
+        if (light.shadows != LightShadows.None && light.shadowStrength > 0f)
+        {
+            LightBakingOutput lightBaking = light.bakingOutput;
+            if (lightBaking.lightmapBakeType == LightmapBakeType.Mixed && lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask)
+            {
+                useShadowMask = true;
+                return new Vector4(light.shadowStrength, 0f, 0f, lightBaking.occlusionMaskChannel);
+            }
+        }
+        return new Vector4(0f, 0f, 0f, -1f);
+    }
+
 
     public void Render()
     {

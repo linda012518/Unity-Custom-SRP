@@ -15,6 +15,7 @@ CBUFFER_START(_LindaLight)
 	float4 _OtherLightPositions[Max_Other_Light_Count];
 	float4 _OtherLightDirections[Max_Other_Light_Count];
 	float4 _OtherLightSpotAngles[Max_Other_Light_Count];
+	float4 _OtherLightShadowData[Max_Other_Light_Count];
 CBUFFER_END
 
 struct Light {
@@ -40,6 +41,13 @@ DirectionalShadowData GetDirectionalShadowData(int lightIndex, ShadowData shadow
 	data.tileIndex = _DirectionalLightShadowData[lightIndex].y + shadowData.cascadeIndex;
 	data.normalBias = _DirectionalLightShadowData[lightIndex].z;
 	data.shadowMaskChannel = _DirectionalLightShadowData[lightIndex].w;
+	return data;
+}
+
+OtherShadowData GetOtherShadowData (int lightIndex) {
+	OtherShadowData data;
+	data.strength = _OtherLightShadowData[lightIndex].x;
+	data.shadowMaskChannel = _OtherLightShadowData[lightIndex].w;
 	return data;
 }
 
@@ -71,7 +79,8 @@ Light GetOtherLight(int index, Surface surfaceWS, ShadowData shadowData)
 
 	float4 spotAngles = _OtherLightSpotAngles[index];
 	float spotAttenuation = Square(saturate(dot(_OtherLightDirections[index].xyz, light.direction) * spotAngles.x + spotAngles.y));
-	light.attenuation = spotAttenuation * rangeAttenuation / distanceSqr;
+	OtherShadowData otherShadowData = GetOtherShadowData(index);
+	light.attenuation = GetOtherShadowAttenuation(otherShadowData, shadowData, surfaceWS) * spotAttenuation * rangeAttenuation / distanceSqr;
 	return light; 
 }
 
