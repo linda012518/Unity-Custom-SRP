@@ -95,7 +95,7 @@ ShadowData GetShadowData(Surface surfaceWS)
 			break;
 		}
 	}
-	if (i == _CascadeCount) 
+	if (i == _CascadeCount  && _CascadeCount > 0) 
 	{ 
 		//超出距离就不要阴影
 		data.strength = 0.0;
@@ -202,7 +202,7 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
 
 	if (directional.strength * shadowData.strength <= 0.0)
 	{
-		shadow = GetBakedShadow(shadowData.shadowMask, directional.shadowMaskChannel, directional.strength);
+		shadow = GetBakedShadow(shadowData.shadowMask, directional.shadowMaskChannel, abs(directional.strength));
 	}
 	else
 	{
@@ -214,6 +214,11 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
 	return shadow;
 }
 
+float GetOtherShadow (OtherShadowData other, ShadowData shadowData, Surface surfaceWS) 
+{
+	return 1.0;
+}
+
 float GetOtherShadowAttenuation (OtherShadowData other, ShadowData shadowData, Surface surfaceWS) 
 {
 	#if !defined(_RECEIVE_SHADOWS)
@@ -221,13 +226,14 @@ float GetOtherShadowAttenuation (OtherShadowData other, ShadowData shadowData, S
 	#endif
 	
 	float shadow;
-	if (other.strength > 0.0) 
+	if (other.strength * shadowData.strength <= 0.0) 
 	{
-		shadow = GetBakedShadow(shadowData.shadowMask, other.shadowMaskChannel, other.strength);
+		shadow = GetBakedShadow(shadowData.shadowMask, other.shadowMaskChannel, abs(other.strength));
 	}
 	else 
 	{
-		shadow = 1.0;
+		shadow = GetOtherShadow(other, shadowData, surfaceWS);
+		shadow = MixBakedAndRealtimeShadows(shadowData, shadow, other.shadowMaskChannel, other.strength);
 	}
 	return shadow;
 }

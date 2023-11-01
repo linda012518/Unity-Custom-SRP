@@ -73,18 +73,18 @@ public class Lighting
                     if (otherLightCount < maxOtherLightCount)
                     {
                         newIndex = otherLightCount;
-                        SetupSpotLight(otherLightCount++, ref visibleLight);
+                        SetupSpotLight(otherLightCount++, i, ref visibleLight);
                     }
                     break;
                 case LightType.Directional:
                     if (dirLightCount < maxDirLightCount)
-                        SetupDirectionalLight(dirLightCount++, ref visibleLight);
+                        SetupDirectionalLight(dirLightCount++, i, ref visibleLight);
                     break;
                 case LightType.Point:
                     if (otherLightCount < maxOtherLightCount)
                     {
                         newIndex = otherLightCount;
-                        SetupPointLight(otherLightCount++, ref visibleLight);
+                        SetupPointLight(otherLightCount++, i, ref visibleLight);
                     }
                     break;
             }
@@ -129,15 +129,16 @@ public class Lighting
             buffer.SetGlobalVectorArray(otherLightShadowDataId, otherLightShadowData);
         }
     }
-    void SetupDirectionalLight(int index, ref VisibleLight light)
+
+    void SetupDirectionalLight(int index, int visibleIndex, ref VisibleLight light)
     {
         dirLightColors[index] = light.finalColor;
         //矩阵第3列是Z轴，可通过矩阵乘法推导，1列X轴，2列Y轴
         dirLightDirections[index] = -light.localToWorldMatrix.GetColumn(2);
-        dirLightShadowData[index] = shadows.ReserveDirectionalShadows(light.light, index);
+        dirLightShadowData[index] = shadows.ReserveDirectionalShadows(light.light, visibleIndex);
     }
 
-    void SetupPointLight(int index, ref VisibleLight light)
+    void SetupPointLight(int index, int visibleIndex, ref VisibleLight light)
     {
         otherLightColors[index] = light.finalColor;
         Vector4 position = light.localToWorldMatrix.GetColumn(3);
@@ -147,10 +148,10 @@ public class Lighting
         //确保点光源不受角度衰减计算的影响
         otherLightSpotAngles[index] = new Vector4(0f, 1f);
 
-        otherLightShadowData[index] = shadows.ReserveOtherShadows(light.light, index);
+        otherLightShadowData[index] = shadows.ReserveOtherShadows(light.light, visibleIndex);
     }
 
-    void SetupSpotLight(int index, ref VisibleLight light)
+    void SetupSpotLight(int index, int visibleIndex, ref VisibleLight light)
     {
         otherLightColors[index] = light.finalColor;
         Vector4 position = light.localToWorldMatrix.GetColumn(3);
@@ -165,7 +166,7 @@ public class Lighting
         float angleRangeInv = 1f / Mathf.Max(innerCos - outerCos, 0.001f);
         otherLightSpotAngles[index] = new Vector4(angleRangeInv, -outerCos * angleRangeInv);
 
-        otherLightShadowData[index] = shadows.ReserveOtherShadows(lightRuntime, index);
+        otherLightShadowData[index] = shadows.ReserveOtherShadows(lightRuntime, visibleIndex);
     }
 
     public void Cleanup()
