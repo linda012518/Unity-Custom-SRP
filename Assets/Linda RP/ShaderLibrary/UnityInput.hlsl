@@ -7,6 +7,9 @@ CBUFFER_START(UnityPerDraw) //固定写法用UnityPerDraw
 	float4 unity_LODFade;
 	real4 unity_WorldTransformParams;
 
+	real4 unity_LightData; //y分量是光源数量
+	real4 unity_LightIndices[2];//每个对象的灯光的索引，共8个
+
 	float4 unity_ProbesOcclusion;//动态物体采样光照探针阴影
 
 	float4 unity_SpecCube0_HDR;
