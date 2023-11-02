@@ -40,6 +40,7 @@ public class Shadows
         dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
         otherShadowAtlasId = Shader.PropertyToID("_OtherShadowAtlas"),
         otherShadowMatricesId = Shader.PropertyToID("_OtherShadowMatrices"),
+        otherShadowTilesId = Shader.PropertyToID("_OtherShadowTiles"),
         cascadeCountId = Shader.PropertyToID("_CascadeCount"),
         cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingShperes"),
         cascadeDataId = Shader.PropertyToID("_CascadeData"),
@@ -51,7 +52,8 @@ public class Shadows
     static Matrix4x4[] otherShadowMatrices = new Matrix4x4[maxShadowedOtherLightCount];
     static Vector4[]
         cascadeCullingShperes = new Vector4[maxCascades],
-        cascadeData = new Vector4[maxCascades];
+        cascadeData = new Vector4[maxCascades],
+        otherShadowTiles = new Vector4[maxShadowedOtherLightCount];
 
     static string[] directionalFilterKeywords = {
         "_DIRECTIONAL_PCF3",
@@ -247,6 +249,7 @@ public class Shadows
         }
 
         buffer.SetGlobalMatrixArray(otherShadowMatricesId, otherShadowMatrices);
+        buffer.SetGlobalVectorArray(otherShadowTilesId, otherShadowTiles);
         SetKeywords(otherFilterKeywords, (int)settings.other.filter - 1);
         buffer.EndSample(bufferName);
         ExecuteBuffer();
@@ -313,6 +316,16 @@ public class Shadows
 
         shadowSetting.splitData = splitData;
 
+        //计算一个象素包含了多大场景：场景总大小 / 总象素
+        //透视投影随距离增加，单象素包含场景线性增大，距离1的时候场景大小是2倍正切值θ
+        //投影矩阵的第一个元素是：1 / aspect * tan(fov / 2) 注后面 fov / 2 = θ
+        //聚光灯宽高一样，aspect = 1，所以矩阵第一个元素：1 / tanθ
+        //距离1的时候比率：2 * tanθ / tileSize，换算后得下公式
+        float texelSize = 2f / (tileSize * projectionMatrix.m00);
+        float filterSize = texelSize * ((float)settings.other.filter + 1f);
+        float bias = light.normalBias * filterSize * 1.4142136f;
+        SetOtherTileData(index, bias);
+
         otherShadowMatrices[index] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetTileViewport(index, split, tileSize), split);
 
         buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
@@ -320,6 +333,13 @@ public class Shadows
         ExecuteBuffer();
         context.DrawShadows(ref shadowSetting);
         buffer.SetGlobalDepthBias(0f, 0f);
+    }
+
+    void SetOtherTileData(int index, float bias)
+    {
+        Vector4 data = Vector4.zero;
+        data.w = bias;
+        otherShadowTiles[index] = data;
     }
 
     void SetCascadeData(int index, Vector4 cullingSphere, float tileSize)

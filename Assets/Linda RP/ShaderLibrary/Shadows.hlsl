@@ -42,6 +42,7 @@ CBUFFER_START(_LindaShadows)
 	float4 _CascadeData[Max_Cascade_Count];
 	float4x4 _DirectionalShadowMatrices[Max_Shadowed_Directional_Light_Count * Max_Cascade_Count];
 	float4x4 _OtherShadowMatrices[Max_Shadowed_Other_Light_Count];
+	float4 _OtherShadowTiles[Max_Shadowed_Other_Light_Count];
 CBUFFER_END
 
 struct ShadowMask {
@@ -62,6 +63,8 @@ struct OtherShadowData {
 	float strength;
 	int tileIndex;
 	int shadowMaskChannel;
+	float3 lightPositionWS;
+	float3 spotDirectionWS;
 };
 
 struct DirectionalShadowData
@@ -252,7 +255,10 @@ float FilterOtherShadow(float3 positionSTS) {
 
 float GetOtherShadow (OtherShadowData other, ShadowData shadowData, Surface surfaceWS) 
 {
-	float3 normalBias = surfaceWS.interpolatedNormal * 0.0;
+	float4 tileData = _OtherShadowTiles[other.tileIndex];
+	float3 surfaceToLight = other.lightPositionWS - surfaceWS.position;
+	float distanceToLightPlane = dot(surfaceToLight, other.spotDirectionWS);
+	float3 normalBias = surfaceWS.interpolatedNormal * (distanceToLightPlane * tileData.w);
 	float4 positionSTS = mul(_OtherShadowMatrices[other.tileIndex], float4(surfaceWS.position + normalBias, 1.0));
 	return FilterOtherShadow(positionSTS.xyz / positionSTS.w);
 }
