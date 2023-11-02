@@ -281,6 +281,7 @@ public class Shadows
 
         float cullingFactor = Mathf.Max(0f, 0.8f - settings.directional.cascadeFade);
 
+        float tileScale = 1f / split;
         for (int i = 0; i < cascadeCount; i++)
         {
             cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
@@ -295,7 +296,7 @@ public class Shadows
             int tileIndex = tileOffset + i;
             //VP矩阵固定，设置视口可以选图片局部绘制
             Vector2 offset = SetTileViewport(tileIndex, split, tileSize);
-            dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, offset, split);
+            dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, offset, tileScale);
             buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
 
             buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
@@ -324,9 +325,11 @@ public class Shadows
         float texelSize = 2f / (tileSize * projectionMatrix.m00);
         float filterSize = texelSize * ((float)settings.other.filter + 1f);
         float bias = light.normalBias * filterSize * 1.4142136f;
-        SetOtherTileData(index, bias);
+        Vector2 offset = SetTileViewport(index, split, tileSize);
+        float tileScale = 1f / split;
+        SetOtherTileData(index, offset, tileScale, bias);
 
-        otherShadowMatrices[index] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetTileViewport(index, split, tileSize), split);
+        otherShadowMatrices[index] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, offset, tileScale);
 
         buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
         buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
@@ -335,9 +338,14 @@ public class Shadows
         buffer.SetGlobalDepthBias(0f, 0f);
     }
 
-    void SetOtherTileData(int index, float bias)
+    void SetOtherTileData(int index, Vector2 offset, float scale, float bias)
     {
+        //把边界缩小半个象素，保证不会采样到外界
+        float border = atlasSizes.w * 0.5f;
         Vector4 data = Vector4.zero;
+        data.x = offset.x * scale + border;
+        data.y = offset.y * scale + border;
+        data.z = scale - border - border;
         data.w = bias;
         otherShadowTiles[index] = data;
     }
@@ -355,7 +363,7 @@ public class Shadows
         cascadeData[index].y = filterSize * 1.4142136f;//乘根号2，在最坏情况下在偏移正方形对角线长度
     }
 
-    Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, int split)
+    Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, float scale)
     {
         //是否要反转Z轴
         if (SystemInfo.usesReversedZBuffer)
@@ -366,7 +374,7 @@ public class Shadows
             m.m23 = -m.m23;
         }
 
-        float scale = 1f / split;
+        //float scale = 1f / split;
         //https://zhuanlan.zhihu.com/p/83499311
         //https://blog.csdn.net/qq_38275140/article/details/87459130?spm=1001.2014.3001.5502
         //把光空间片段位置转换为裁切空间的标准化设备坐标。
