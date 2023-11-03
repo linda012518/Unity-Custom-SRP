@@ -29,6 +29,7 @@ public class Shadows
         public int visibleLightIndex;//这里的索引是所有灯光的索引，在CPU端的
         public float slopeScaleBias;
         public float normalBias;
+        public bool isPoint;
     }
 
     ShadowedOtherLight[] shadowedOtherLights = new ShadowedOtherLight[maxShadowedOtherLightCount];
@@ -139,7 +140,10 @@ public class Shadows
             maskChannel = lightBaking.occlusionMaskChannel;
         }
 
-        if (shadowedOtherLightCount >= maxShadowedOtherLightCount || !cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
+        bool isPoint = light.type == LightType.Point;
+        int newLightCount = shadowedOtherLightCount + (isPoint ? 6 : 1);
+
+        if (newLightCount >= maxShadowedOtherLightCount || !cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
         {
             //用负值强度，确保使用烘焙的阴影
             return new Vector4(-light.shadowStrength, 0f, 0f, maskChannel);
@@ -149,11 +153,14 @@ public class Shadows
         {
             visibleLightIndex = visibleLightIndex, //这里的索引是所有灯光的索引，在CPU端的
             slopeScaleBias = light.shadowBias,
-            normalBias = light.shadowNormalBias
+            normalBias = light.shadowNormalBias,
+            isPoint = isPoint
         };
 
         //这里的count索引是GPU端的
-        return new Vector4(light.shadowStrength, shadowedOtherLightCount++, 0f, maskChannel);
+        Vector4 data = new Vector4(light.shadowStrength, shadowedOtherLightCount++, isPoint ? 1 : 0, maskChannel);
+        shadowedOtherLightCount = newLightCount;
+        return data;
     }
 
 
@@ -243,9 +250,19 @@ public class Shadows
         int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
         int tileSize = altasSize / split;
 
-        for (int i = 0; i < shadowedOtherLightCount; i++)
+        for (int i = 0; i < shadowedOtherLightCount;)
         {
-            RenderSpotShadows(i, split, tileSize);
+            if (shadowedOtherLights[i].isPoint)
+            {
+                RenderPointShadows(i, split, tileSize);
+                i += 6;
+            }
+            else
+            {
+                RenderSpotShadows(i, split, tileSize);
+                i += 1;
+            }
+            
         }
 
         buffer.SetGlobalMatrixArray(otherShadowMatricesId, otherShadowMatrices);
@@ -337,6 +354,47 @@ public class Shadows
         context.DrawShadows(ref shadowSetting);
         buffer.SetGlobalDepthBias(0f, 0f);
     }
+
+    void RenderPointShadows(int index, int split, int tileSize)
+    {
+        ShadowedOtherLight light = shadowedOtherLights[index];
+        ShadowDrawingSettings shadowSetting = new ShadowDrawingSettings(cullingResults, light.visibleLightIndex);
+
+        //计算一个象素包含了多大场景：场景总大小 / 总象素
+        //透视投影随距离增加，单象素包含场景线性增大，距离1的时候场景大小是2倍正切值θ
+        //投影矩阵的第一个元素是：1 / aspect * tan(fov / 2) 注后面 fov / 2 = θ
+        //聚光灯宽高一样，aspect = 1，所以矩阵第一个元素：1 / tanθ
+        //距离1的时候比率：2 * tanθ / tileSize，换算后得下公式
+        //点光源广角为90度，tanθ = 1，可以不用放循环
+        float texelSize = 2f / tileSize;
+        float filterSize = texelSize * ((float)settings.other.filter + 1f);
+        float bias = light.normalBias * filterSize * 1.4142136f;
+        float tileScale = 1f / split;
+
+        for (int i = 0; i < 6; i++)
+        {
+            cullingResults.ComputePointShadowMatricesAndCullingPrimitives(
+                light.visibleLightIndex, (CubemapFace)i, 0, 
+                out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
+
+            shadowSetting.splitData = splitData;
+            int tileIndex = index + i;
+
+
+            Vector2 offset = SetTileViewport(tileIndex, split, tileSize);
+            
+            SetOtherTileData(tileIndex, offset, tileScale, bias);
+
+            otherShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, offset, tileScale);
+
+            buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+            buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
+            ExecuteBuffer();
+            context.DrawShadows(ref shadowSetting);
+            buffer.SetGlobalDepthBias(0f, 0f);
+        }
+    }
+
 
     void SetOtherTileData(int index, Vector2 offset, float scale, float bias)
     {
