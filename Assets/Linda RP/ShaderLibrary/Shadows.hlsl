@@ -62,8 +62,10 @@ struct ShadowData
 struct OtherShadowData {
 	float strength;
 	int tileIndex;
+	bool isPoint;
 	int shadowMaskChannel;
 	float3 lightPositionWS;
+	float3 lightDirectionWS;
 	float3 spotDirectionWS;
 };
 
@@ -254,13 +256,31 @@ float FilterOtherShadow(float3 positionSTS, float3 bounds) {
 	#endif
 }
 
+static const float3 pointShadowPlanes[6] = {
+	float3(-1.0, 0.0, 0.0),
+	float3(1.0, 0.0, 0.0),
+	float3(0.0, -1.0, 0.0),
+	float3(0.0, 1.0, 0.0),
+	float3(0.0, 0.0, -1.0),
+	float3(0.0, 0.0, 1.0)
+};
+
 float GetOtherShadow (OtherShadowData other, ShadowData shadowData, Surface surfaceWS) 
 {
-	float4 tileData = _OtherShadowTiles[other.tileIndex];
+	float tileIndex = other.tileIndex;
+	float3 lightPlane = other.spotDirectionWS;
+	if (other.isPoint) {	//获取点光阴影图集偏移，unity内部函数  顺序： +X、?X、+Y、?Y、+Z、?Z
+		float faceOffset = CubeMapFaceID(-other.lightDirectionWS);
+		tileIndex += faceOffset;
+		//根据点光面索引，拿到一个与法线相反的方向，类似于光指向方向
+		lightPlane = pointShadowPlanes[faceOffset];
+	}
+
+	float4 tileData = _OtherShadowTiles[tileIndex];
 	float3 surfaceToLight = other.lightPositionWS - surfaceWS.position;
-	float distanceToLightPlane = dot(surfaceToLight, other.spotDirectionWS);
+	float distanceToLightPlane = dot(surfaceToLight, lightPlane);
 	float3 normalBias = surfaceWS.interpolatedNormal * (distanceToLightPlane * tileData.w);
-	float4 positionSTS = mul(_OtherShadowMatrices[other.tileIndex], float4(surfaceWS.position + normalBias, 1.0));
+	float4 positionSTS = mul(_OtherShadowMatrices[tileIndex], float4(surfaceWS.position + normalBias, 1.0));
 	return FilterOtherShadow(positionSTS.xyz / positionSTS.w, tileData.xyz);
 }
 
