@@ -371,11 +371,19 @@ public class Shadows
         float bias = light.normalBias * filterSize * 1.4142136f;
         float tileScale = 1f / split;
 
+        //立方体阴影会采样的图集边缘导致近处无阴影，稍微增加FOV避免采样到边缘
+        float fovBias = Mathf.Atan(1f + bias + filterSize) * Mathf.Rad2Deg * 2f - 90f;
+
         for (int i = 0; i < 6; i++)
         {
             cullingResults.ComputePointShadowMatricesAndCullingPrimitives(
-                light.visibleLightIndex, (CubemapFace)i, 0, 
+                light.visibleLightIndex, (CubemapFace)i, fovBias, 
                 out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
+
+            //unity渲染点光阴影会把三角形顺序颠倒，导致一些露光，这一行第一个分量总是0忽略，待查看原理
+            viewMatrix.m11 = -viewMatrix.m11;
+            viewMatrix.m12 = -viewMatrix.m12;
+            viewMatrix.m13 = -viewMatrix.m13;
 
             shadowSetting.splitData = splitData;
             int tileIndex = index + i;
