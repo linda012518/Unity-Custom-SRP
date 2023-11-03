@@ -380,7 +380,7 @@ public class Shadows
         //把光空间片段位置转换为裁切空间的标准化设备坐标。
         //当我们在顶点着色器输出一个裁切空间顶点位置到gl_Position时，OpenGL自动进行一个透视除法，将裁切空间坐标的范围-w到w转为-1到1
         //NDC空间是-1~1所以要缩小一半，但要和采样出来的深度图比较，转换成0~1
-        //相当于在shader里少了x = x * 0.5 + 0.5;的操作，shader里再除w  //shader除w远处会变黑，待研究
+        //相当于在shader里少了x = x * 0.5 + 0.5;的操作，shader里再除w  //平行光不需要除w进行透视较正
         //Matrix4x4 scaleOffset = Matrix4x4.TRS(Vector3.one * 0.5f, Quaternion.identity, Vector3.one * 0.5f);
         //Matrix4x4 scaleOffset = Matrix4x4.identity;
         //scaleOffset.m00 = scaleOffset.m11 = scaleOffset.m22 = 0.5f;

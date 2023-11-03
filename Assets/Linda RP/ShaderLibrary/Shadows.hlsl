@@ -156,7 +156,7 @@ float GetCascadedShadow (DirectionalShadowData directional, ShadowData shadowDat
 {
 	float3 normalBias = surfaceWS.interpolatedNormal * (directional.normalBias * _CascadeData[shadowData.cascadeIndex].y);
 	float4 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position + normalBias, 1.0));
-	//positionSTS.xyz /= positionSTS.w; //这里不能除w，否则远处会变黑，待研究
+	//positionSTS.xyz /= positionSTS.w; //平行光是正交投影，不需要除w进行透视较正
 	float shadow = FilterDirectionalShadow(positionSTS.xyz);
 	//如果小于1，则处理阴影级联过渡区，从下个级联采样差值
 	if (shadowData.cascadeBlend < 1.0) {
