@@ -12,6 +12,12 @@ SAMPLER(sampler_linear_clamp);
 
 float4 _ProjectionParams;
 
+float4 _PostFXSource_TexelSize;
+
+float4 GetSourceTexelSize () {
+	return _PostFXSource_TexelSize;
+}
+
 float4 GetSource(float2 screenUV) 
 {
 	//用lod主动规避mipmap
@@ -54,6 +60,36 @@ Varyings DefaultPassVertex(uint vertexID : SV_VertexID)
 float4 CopyPassFragment(Varyings input) : SV_TARGET
 {
 	return GetSource(input.screenUV);
+}
+
+float4 BloomHorizontalPassFragment (Varyings input) : SV_TARGET {
+	float3 color = 0.0;
+	float offsets[] = { -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0 };
+	float weights[] = {
+		0.01621622, 0.05405405, 0.12162162, 0.19459459, 
+		0.22702703,
+		0.19459459, 0.12162162, 0.05405405, 0.01621622
+	};
+	for (int i = 0; i < 9; i++) {
+		float offset = offsets[i] * 2.0 * GetSourceTexelSize().x;
+		color += GetSource(input.screenUV + float2(offset, 0.0)).rgb * weights[i];
+	}
+	return float4(color, 1.0);
+}
+
+float4 BloomVerticalPassFragment (Varyings input) : SV_TARGET {
+	float3 color = 0.0;
+	float offsets[] = { -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0 };
+	float weights[] = {
+		0.01621622, 0.05405405, 0.12162162, 0.19459459, 
+		0.22702703,
+		0.19459459, 0.12162162, 0.05405405, 0.01621622
+	};
+	for (int i = 0; i < 9; i++) {
+		float offset = offsets[i] * GetSourceTexelSize().y;
+		color += GetSource(input.screenUV + float2(0.0, offset)).rgb * weights[i];
+	}
+	return float4(color, 1.0);
 }
 
 #endif
