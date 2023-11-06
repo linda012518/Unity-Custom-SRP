@@ -9,9 +9,12 @@ public class LindaRenderPipelineAsset : RenderPipelineAsset
 
     [SerializeField]
     ShadowSettings shadows = default;
-    
+
+    [SerializeField]
+    PostFXSettings postFXSetting = default;
+
     protected override RenderPipeline CreatePipeline()
     {
-        return new LindaRenderPipeline(useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows);
+        return new LindaRenderPipeline(useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting);
     }
 }

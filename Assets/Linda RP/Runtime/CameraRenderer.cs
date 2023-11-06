@@ -14,6 +14,8 @@ public partial class CameraRenderer
         unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"), 
         litShaderTagId = new ShaderTagId("LindaLit");
 
+    static int frameBufferId = Shader.PropertyToID("_CameraFrameBuffer");
+
     ScriptableRenderContext context;
 
     Camera camera;
@@ -22,7 +24,9 @@ public partial class CameraRenderer
 
     Lighting lighting = new Lighting();
 
-    public void Render(ScriptableRenderContext context, Camera camera, bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings)
+    PostFXStack postFXStack = new PostFXStack();
+
+    public void Render(ScriptableRenderContext context, Camera camera, bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting)
     {
         this.context = context;
         this.camera = camera;
@@ -38,12 +42,15 @@ public partial class CameraRenderer
         ExecuteBuffer();
         //先Setup相机的东西会在渲染常规几何体之前切换到阴影图集，这样会有错，先渲染阴影
         lighting.Setup(context, cullingResults, shadowSettings, useLightsPerObject);
+        postFXStack.Setup(context, camera, postFXSetting);
         buffer.EndSample(SampleName);
         Setup();
         DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject);
         DrawUnsupportedShaders();
-        DrawGizmos();
-        lighting.Cleanup();
+        DrawGizmosBeforeFX();
+        postFXStack.Render(frameBufferId);
+        DrawGizmosAfterFX();
+        Cleanup();
         Submit();
     }
 
@@ -63,6 +70,15 @@ public partial class CameraRenderer
         //设置mvp矩阵，先调置相机再清屏调用glClear，否则会单独画一个四边形glDraw
         context.SetupCameraProperties(camera);
         CameraClearFlags flags = camera.clearFlags;
+
+        if (postFXStack.IsActive)
+        {
+            if (flags > CameraClearFlags.Color)
+                flags = CameraClearFlags.Color;
+            buffer.GetTemporaryRT(frameBufferId, camera.pixelWidth, camera.pixelHeight, 32, FilterMode.Bilinear, RenderTextureFormat.Default);
+            buffer.SetRenderTarget(frameBufferId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+        }
+
         //清屏 CameraClearFlags前4个枚举都要清除深度，只有等于Color时才清除颜色，如果清除纯色使用相机背景色，把背景色改到线性空间
         buffer.ClearRenderTarget(flags <= CameraClearFlags.Depth, flags == CameraClearFlags.Color, flags == CameraClearFlags.Color ? camera.backgroundColor.linear : Color.clear);
         //frame debug和性能分析器 标注开始点，好像和参数无关，最终使用的buffer.name，需要执行ExecuteCommandBuffer
@@ -109,4 +125,12 @@ public partial class CameraRenderer
         buffer.Clear();
     }
 
+    void Cleanup()
+    {
+        lighting.Cleanup();
+        if (postFXStack.IsActive)
+        {
+            buffer.ReleaseTemporaryRT(frameBufferId);
+        }
+    }
 }
