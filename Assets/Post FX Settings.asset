@@ -10,5 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9bbd02ee789eeda43820434fec4fba90, type: 3}
-  m_Name: New Post FX Settings
+  m_Name: Post FX Settings
   m_EditorClassIdentifier: 
+  shader: {fileID: 4800000, guid: 6f0117a6de4e44d49b799574ba4796d7, type: 3}
