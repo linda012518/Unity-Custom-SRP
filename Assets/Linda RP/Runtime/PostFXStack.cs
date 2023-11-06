@@ -28,7 +28,10 @@ public class PostFXStack
     {
         this.context = context;
         this.camera = camera;
-        this.setting = setting;
+        //场景里没有相机不用后处理
+        this.setting = camera.cameraType <= CameraType.SceneView ? setting : null;
+        //使编辑窗口后处理按钮生效，可以控制是否显示后处理
+        ApplySceneViewState();
     }
 
     void Draw(RenderTargetIdentifier from, RenderTargetIdentifier to, Pass pass)
