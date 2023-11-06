@@ -7,6 +7,17 @@ struct Varyings
 	float2 screenUV : TEXCOORD0;
 };
 
+TEXTURE2D(_PostFXSource);
+SAMPLER(sampler_linear_clamp);
+
+float4 _ProjectionParams;
+
+float4 GetSource(float2 screenUV) 
+{
+	//用lod主动规避mipmap
+	return SAMPLE_TEXTURE2D_LOD(_PostFXSource, sampler_linear_clamp, screenUV, 0);
+}
+
 /*
 
 3	*
@@ -33,12 +44,16 @@ Varyings DefaultPassVertex(uint vertexID : SV_VertexID)
 		vertexID == 1 ? 2.0 : 0.0
 	);
 
+	if (_ProjectionParams.x < 0.0) 
+	{
+		output.screenUV.y = 1.0 - output.screenUV.y;
+	}
 	return output;
 }
 
 float4 CopyPassFragment(Varyings input) : SV_TARGET
 {
-	return float4(input.screenUV, 0.0, 0.0);
+	return GetSource(input.screenUV);
 }
 
 #endif

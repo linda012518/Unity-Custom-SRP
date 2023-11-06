@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class PostFXStack
+public partial class PostFXStack
 {
     enum Pass
     {
