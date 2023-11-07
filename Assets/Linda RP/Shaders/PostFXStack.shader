@@ -16,6 +16,20 @@ Shader "Hidden/Linda RP/Post FX Stack"
 
 		Pass 
 		{
+			Name "Bloom Prefilter"
+			
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma vertex DefaultPassVertex
+			#pragma fragment BloomPrefilterPassFragment
+
+			ENDHLSL
+		}
+
+		Pass 
+		{
 			Name "Bloom Combine"
 			
 			HLSLPROGRAM

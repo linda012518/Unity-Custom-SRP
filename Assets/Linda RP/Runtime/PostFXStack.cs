@@ -7,6 +7,7 @@ public partial class PostFXStack
 {
     enum Pass
     {
+        BloomPrefilter,
         BloomCombine,
         BloomVertical,
         BloomHorizontal,
@@ -26,6 +27,7 @@ public partial class PostFXStack
     int
         bloomBucibicUpsamplingId = Shader.PropertyToID("_BloomBicubicUpsampling"),
         bloomPrefilterId = Shader.PropertyToID("_BloomPrefilter"),
+        bloomThresholdId = Shader.PropertyToID("_BloomThreshold"),
         fxSourceId = Shader.PropertyToID("_PostFXSource"),
         fxSource2Id = Shader.PropertyToID("_PostFXSource2");
 
@@ -85,9 +87,17 @@ public partial class PostFXStack
             return;
         }
 
+        Vector4 threshold;//x=t;y=-t+tk;z=2tk;w=1/4tk+0.00001
+        threshold.x = Mathf.GammaToLinearSpace(bloom.threshold);
+        threshold.y = threshold.x * bloom.thresholdKnee;
+        threshold.z = 2f * threshold.y;
+        threshold.w = 0.25f / (threshold.y + 0.00001f);
+        threshold.y -= threshold.x;
+        buffer.SetGlobalVector(bloomThresholdId, threshold);
+
         RenderTextureFormat format = RenderTextureFormat.Default;
         buffer.GetTemporaryRT(bloomPrefilterId, width, height, 0, FilterMode.Bilinear, format);
-        Draw(sourceId, bloomPrefilterId, Pass.Copy);
+        Draw(sourceId, bloomPrefilterId, Pass.BloomPrefilter);
         width /= 2;
         height /= 2;
 

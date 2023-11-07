@@ -19,6 +19,8 @@ float4 _PostFXSource_TexelSize;
 
 bool _BloomBicubicUpsampling;
 
+float4 _BloomThreshold;
+
 float4 GetSourceTexelSize () {
 	return _PostFXSource_TexelSize;
 }
@@ -114,6 +116,26 @@ float4 BloomCombinePassFragment (Varyings input) : SV_TARGET {
 	
 	float3 highRes = GetSource2(input.screenUV).rgb;
 	return float4(lowRes + highRes, 1.0);
+}
+
+//计算权重，不是平均相加
+//_BloomThreshold：x=t;y=-t+tk;z=2tk;w=1/4tk+0.00001
+//weight = max(s, b - t) / max(b, 0.00001)
+//s = min(max(0, b - t + tk), 2tk)^2 / 4tk + 0.00001
+//b 是亮度，t k 是输入slider
+float3 ApplyBloomThreshold (float3 color) {
+	float brightness = Max3(color.r, color.g, color.b);
+	float soft = brightness + _BloomThreshold.y;
+	soft = clamp(soft, 0.0, _BloomThreshold.z);
+	soft = soft * soft * _BloomThreshold.w;
+	float contribution = max(soft, brightness - _BloomThreshold.x);
+	contribution /= max(brightness, 0.00001);
+	return color * contribution;
+}
+
+float4 BloomPrefilterPassFragment (Varyings input) : SV_TARGET {
+	float3 color = ApplyBloomThreshold(GetSource(input.screenUV).rgb);
+	return float4(color, 1.0);
 }
 
 #endif
