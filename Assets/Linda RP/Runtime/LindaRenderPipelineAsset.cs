@@ -5,6 +5,9 @@ using UnityEngine.Rendering;
 public class LindaRenderPipelineAsset : RenderPipelineAsset
 {
     [SerializeField]
+    bool allowHDR = true;
+
+    [SerializeField]
     bool useDynamicBatching = true, useGPUInstancing = true, useSRPBatcher = true, useLightsPerObject = true;
 
     [SerializeField]
@@ -15,6 +18,6 @@ public class LindaRenderPipelineAsset : RenderPipelineAsset
 
     protected override RenderPipeline CreatePipeline()
     {
-        return new LindaRenderPipeline(useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting);
+        return new LindaRenderPipeline(allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting);
     }
 }

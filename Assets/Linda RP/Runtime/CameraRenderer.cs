@@ -26,7 +26,9 @@ public partial class CameraRenderer
 
     PostFXStack postFXStack = new PostFXStack();
 
-    public void Render(ScriptableRenderContext context, Camera camera, bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting)
+    bool useHDR;
+
+    public void Render(ScriptableRenderContext context, Camera camera, bool allowHDR, bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting)
     {
         this.context = context;
         this.camera = camera;
@@ -38,11 +40,13 @@ public partial class CameraRenderer
         if (false == Cull(shadowSettings.maxDistance))
             return;
 
+        useHDR = allowHDR && camera.allowHDR;
+
         buffer.BeginSample(SampleName);
         ExecuteBuffer();
         //先Setup相机的东西会在渲染常规几何体之前切换到阴影图集，这样会有错，先渲染阴影
         lighting.Setup(context, cullingResults, shadowSettings, useLightsPerObject);
-        postFXStack.Setup(context, camera, postFXSetting);
+        postFXStack.Setup(context, camera, postFXSetting, useHDR);
         buffer.EndSample(SampleName);
         Setup();
         DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject);
@@ -75,7 +79,7 @@ public partial class CameraRenderer
         {
             if (flags > CameraClearFlags.Color)
                 flags = CameraClearFlags.Color;
-            buffer.GetTemporaryRT(frameBufferId, camera.pixelWidth, camera.pixelHeight, 32, FilterMode.Bilinear, RenderTextureFormat.Default);
+            buffer.GetTemporaryRT(frameBufferId, camera.pixelWidth, camera.pixelHeight, 32, FilterMode.Bilinear, useHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default);
             buffer.SetRenderTarget(frameBufferId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
         }
 

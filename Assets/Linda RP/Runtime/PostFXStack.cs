@@ -36,6 +36,8 @@ public partial class PostFXStack
 
     int bloomPyramidId;
 
+    bool useHDR;
+
     public bool IsActive => setting != null;
 
     public PostFXStack()
@@ -48,8 +50,9 @@ public partial class PostFXStack
         }
     }
 
-    public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings setting)
+    public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings setting, bool useHDR)
     {
+        this.useHDR = useHDR;
         this.context = context;
         this.camera = camera;
         //场景里没有相机不用后处理
@@ -96,7 +99,7 @@ public partial class PostFXStack
         threshold.y -= threshold.x;
         buffer.SetGlobalVector(bloomThresholdId, threshold);
 
-        RenderTextureFormat format = RenderTextureFormat.Default;
+        RenderTextureFormat format = useHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default;
         buffer.GetTemporaryRT(bloomPrefilterId, width, height, 0, FilterMode.Bilinear, format);
         Draw(sourceId, bloomPrefilterId, Pass.BloomPrefilter);
         width /= 2;
