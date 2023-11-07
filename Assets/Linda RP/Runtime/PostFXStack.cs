@@ -23,7 +23,8 @@ public partial class PostFXStack
 
     PostFXSettings setting;
 
-    int 
+    int
+        bloomBucibicUpsamplingId = Shader.PropertyToID("_BloomBicubicUpsampling"),
         fxSourceId = Shader.PropertyToID("_PostFXSource"),
         fxSource2Id = Shader.PropertyToID("_PostFXSource2");
 
@@ -102,6 +103,8 @@ public partial class PostFXStack
             width /= 2;
             height /= 2;
         }
+
+        buffer.SetGlobalFloat(bloomBucibicUpsamplingId, bloom.bicubicUpsampling ? 1f : 0f);
 
         if (i > 1)
         {
