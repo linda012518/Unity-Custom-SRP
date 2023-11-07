@@ -21,7 +21,7 @@ public class PostFXSettings : ScriptableObject
 		[Min(1f)]
 		public int downscaleLimit;
 
-		public bool bicubicUpsampling;
+		public bool bicubicUpsampling;//三线性采样，减少灰度图出来块状模糊
 
 		[Min(0f)]
 		public float threshold;
@@ -30,13 +30,20 @@ public class PostFXSettings : ScriptableObject
 		public float thresholdKnee;
 
 		[Min(0f)]
-		public float intensity;
+		public float intensity;//全局强度
 
-		public bool fadeFireflies;
+		public bool fadeFireflies;//消除闪烁
+
+		public enum Mode { Additive, Scattering }
+
+		public Mode mode;
+
+		[Range(0.05f, 0.95f)]
+		public float scatter;//散射程度
 	}
 
 	[SerializeField]
-	BloomSettings bloom = default;
+	BloomSettings bloom = new BloomSettings { scatter = 0.7f };
 
 	public BloomSettings Bloom => bloom;
 

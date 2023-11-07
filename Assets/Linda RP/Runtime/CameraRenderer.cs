@@ -52,7 +52,8 @@ public partial class CameraRenderer
         DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject);
         DrawUnsupportedShaders();
         DrawGizmosBeforeFX();
-        postFXStack.Render(frameBufferId);
+        if (postFXStack.IsActive)
+            postFXStack.Render(frameBufferId);
         DrawGizmosAfterFX();
         Cleanup();
         Submit();

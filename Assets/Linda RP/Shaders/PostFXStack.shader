@@ -13,6 +13,34 @@ Shader "Hidden/Linda RP/Post FX Stack"
 		#include "PostFXStackPasses.hlsl"
 
 		ENDHLSL
+
+		Pass 
+		{
+			Name "Bloom Scatter Final"
+			
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma vertex DefaultPassVertex
+			#pragma fragment BloomScatterFinalPassFragment
+
+			ENDHLSL
+		}
+
+		Pass 
+		{
+			Name "Bloom Scatter"
+			
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma vertex DefaultPassVertex
+			#pragma fragment BloomScatterPassFragment
+
+			ENDHLSL
+		}
 		
 		Pass 
 		{
