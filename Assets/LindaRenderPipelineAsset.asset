@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6758a4e4fb4c47e45a9cf5efac58e2a7, type: 3}
   m_Name: LindaRenderPipelineAsset
   m_EditorClassIdentifier: 
+  allowHDR: 1
   useDynamicBatching: 1
   useGPUInstancing: 1
   useSRPBatcher: 1

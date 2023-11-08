@@ -121,6 +121,7 @@ float4 BloomCombinePassFragment (Varyings input) : SV_TARGET {
 	return float4(lowRes * _BloomIntensity + highRes, 1.0);
 }
 
+//引入亮度阈值来限制影响Bloom效果，这样就会是全局都亮
 //计算权重，不是平均相加
 //_BloomThreshold：x=t;y=-t+tk;z=2tk;w=1/4tk+0.00001
 //weight = max(s, b - t) / max(b, 0.00001)
@@ -141,6 +142,7 @@ float4 BloomPrefilterPassFragment (Varyings input) : SV_TARGET {
 	return float4(color, 1.0);
 }
 
+//HDR会产生比周围亮很多的区域，当区域很小到一个象素时，转动相机会导致这个区域时有进无，加上bloom会闪烁，采样周围象素加权平均可解
 //权重公式 weight = 1 / 1 + l
 //l = Luminance(color)
 float4 BloomPrefilterFirefliesPassFragment (Varyings input) : SV_TARGET {

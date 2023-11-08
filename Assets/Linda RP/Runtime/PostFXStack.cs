@@ -32,6 +32,7 @@ public partial class PostFXStack
         bloomIntensityId = Shader.PropertyToID("_BloomIntensity"),
         bloomPrefilterId = Shader.PropertyToID("_BloomPrefilter"),
         bloomThresholdId = Shader.PropertyToID("_BloomThreshold"),
+        bloomResultId = Shader.PropertyToID("_BloomResult"),
         fxSourceId = Shader.PropertyToID("_PostFXSource"),
         fxSource2Id = Shader.PropertyToID("_PostFXSource2");
 
@@ -73,26 +74,36 @@ public partial class PostFXStack
 
     public void Render(int sourceId)
     {
-        DoBloom(sourceId);
+        if (DoBloom(sourceId))
+        {
+            DoToneMapping(bloomResultId);
+            buffer.ReleaseTemporaryRT(bloomResultId);
+        }
+        else
+        {
+            DoToneMapping(sourceId);
+        }
         context.ExecuteCommandBuffer(buffer);
         buffer.Clear();
     }
 
-    void DoBloom(int sourceId)
+    void DoToneMapping(int sourceId)
     {
-        buffer.BeginSample("Bloom");
+        Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Copy);
+    }
 
+    bool DoBloom(int sourceId)
+    {
         PostFXSettings.BloomSettings bloom = setting.Bloom;
 
         int width = camera.pixelWidth / 2, height = camera.pixelHeight / 2;
 
-
         if (bloom.maxIterations == 0 || bloom.intensity <= 0f || height < bloom.downscaleLimit * 2 || width < bloom.downscaleLimit * 2)
         {
-            Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Copy);
-            buffer.EndSample("Bloom");
-            return;
+            return false;
         }
+
+        buffer.BeginSample("Bloom");
 
         Vector4 threshold;//x=t;y=-t+tk;z=2tk;w=1/4tk+0.00001
         threshold.x = Mathf.GammaToLinearSpace(bloom.threshold);
@@ -170,9 +181,12 @@ public partial class PostFXStack
 
         buffer.SetGlobalFloat(bloomIntensityId, finalIntensity);
         buffer.SetGlobalTexture(fxSource2Id, sourceId);
-        Draw(fromId, BuiltinRenderTextureType.CameraTarget, finalPass);
+        buffer.GetTemporaryRT(bloomResultId, camera.pixelWidth, camera.pixelHeight, 0, FilterMode.Bilinear, format);
+        Draw(fromId, bloomResultId, finalPass);
         buffer.ReleaseTemporaryRT(fromId);
 
         buffer.EndSample("Bloom");
+
+        return true;
     }
 }
