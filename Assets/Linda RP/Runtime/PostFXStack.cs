@@ -20,6 +20,7 @@ public partial class PostFXStack
         ToneMappingACES,
         ToneMappingNeutral,
         ToneMappingReinhard,
+        Final
     }
 
     const string bufferName = "Post FX";
@@ -64,6 +65,8 @@ public partial class PostFXStack
 
     bool useHDR;
 
+    int colorLUTResolution;
+
     public bool IsActive => setting != null;
 
     public PostFXStack()
@@ -76,8 +79,9 @@ public partial class PostFXStack
         }
     }
 
-    public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings setting, bool useHDR)
+    public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings setting, bool useHDR, int colorLUTResolution)
     {
+        this.colorLUTResolution = colorLUTResolution;
         this.useHDR = useHDR;
         this.context = context;
         this.camera = camera;
@@ -163,10 +167,23 @@ public partial class PostFXStack
         ConfigureChannelMixer();
         ConfigureShadowsMidtonesHighlights();
 
+        int lutHeight = colorLUTResolution;
+        int lutWidth = lutHeight * lutHeight;
+        buffer.GetTemporaryRT(colorGradingLUTId, lutWidth, lutHeight, 0, FilterMode.Bilinear, RenderTextureFormat.DefaultHDR);
+        buffer.SetGlobalVector(colorGradingLUTParametersId, new Vector4(
+            lutHeight, 0.5f / lutWidth, 0.5f / lutHeight, lutHeight / (lutHeight - 1f)
+        ));
+
         ToneMappingSettings.Mode mode = setting.ToneMapping.mode;
         Pass pass = Pass.ColorGradingNone + (int)mode;
+        buffer.SetGlobalFloat(colorGradingLUTInLogId, useHDR && pass != Pass.ColorGradingNone ? 1f : 0f);
 
-        Draw(sourceId, BuiltinRenderTextureType.CameraTarget, pass);
+        Draw(sourceId, colorGradingLUTId, pass);
+
+        buffer.SetGlobalVector(colorGradingLUTParametersId,new Vector4(1f / lutWidth, 1f / lutHeight, lutHeight - 1f));
+
+        Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Final);
+        buffer.ReleaseTemporaryRT(colorGradingLUTId);
     }
 
     bool DoBloom(int sourceId)

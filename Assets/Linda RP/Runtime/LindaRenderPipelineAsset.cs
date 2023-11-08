@@ -16,8 +16,13 @@ public class LindaRenderPipelineAsset : RenderPipelineAsset
     [SerializeField]
     PostFXSettings postFXSetting = default;
 
+    public enum ColorLUTResolution { _16 = 16, _32 = 32, _64 = 64 }
+
+    [SerializeField]
+    ColorLUTResolution colorLUTResolution = ColorLUTResolution._32;
+
     protected override RenderPipeline CreatePipeline()
     {
-        return new LindaRenderPipeline(allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting);
+        return new LindaRenderPipeline(allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting, (int)colorLUTResolution);
     }
 }
