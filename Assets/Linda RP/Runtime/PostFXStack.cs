@@ -14,7 +14,8 @@ public partial class PostFXStack
         BloomAdd,
         BloomVertical,
         BloomHorizontal,
-        Copy
+        Copy,
+        ToneMappingReinhard,
     }
 
     const string bufferName = "Post FX";
@@ -89,7 +90,10 @@ public partial class PostFXStack
 
     void DoToneMapping(int sourceId)
     {
-        Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Copy);
+        PostFXSettings.ToneMappingSettings.Mode mode = setting.ToneMapping.mode;
+        Pass pass = mode < 0 ? Pass.Copy : Pass.ToneMappingReinhard;
+
+        Draw(sourceId, BuiltinRenderTextureType.CameraTarget, pass);
     }
 
     bool DoBloom(int sourceId)

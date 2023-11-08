@@ -125,5 +125,19 @@ Shader "Hidden/Linda RP/Post FX Stack"
 
 			ENDHLSL
 		}
+
+		Pass 
+		{
+			Name "Tone Mapping Reinhard"
+			
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma vertex DefaultPassVertex
+			#pragma fragment ToneMappingReinhardPassFragment
+
+			ENDHLSL
+		}
 	}
 }

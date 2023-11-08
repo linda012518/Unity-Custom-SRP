@@ -200,4 +200,11 @@ float4 BloomScatterFinalPassFragment (Varyings input) : SV_TARGET {
 	return float4(lerp(highRes, lowRes, _BloomIntensity), 1.0);
 }
 
+float4 ToneMappingReinhardPassFragment (Varyings input) : SV_TARGET {
+	float4 color = GetSource(input.screenUV);
+	color.rgb = min(color.rgb, 60.0);
+	color.rgb /= color.rgb + 1.0;
+	return color;
+}
+
 #endif
