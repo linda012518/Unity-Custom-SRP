@@ -200,24 +200,122 @@ float4 BloomScatterFinalPassFragment (Varyings input) : SV_TARGET {
 	return float4(lerp(highRes, lowRes, _BloomIntensity), 1.0);
 }
 
+float4 _ColorAdjustments;
+float4 _ColorFilter;
+float4 _WhiteBalance;
+float4 _SplitToningShadows, _SplitToningHighlights;
+float4 _ChannelMixerRed, _ChannelMixerGreen, _ChannelMixerBlue;
+float4 _SMHShadows, _SMHMidtones, _SMHHighlights, _SMHRange;
+
+float3 ColorGradePostExposure (float3 color) {
+	//曝光
+	return color * _ColorAdjustments.x;
+}
+
+float3 ColorGradeWhiteBalance (float3 color) {
+	color = LinearToLMS(color);
+	color *= _WhiteBalance.rgb;
+	return LMSToLinear(color);
+}
+
+float3 ColorGradingContrast (float3 color) {
+	//对比度
+	color = LinearToLogC(color);
+	color = (color - ACEScc_MIDGRAY) * _ColorAdjustments.y + ACEScc_MIDGRAY;
+	return LogCToLinear(color);
+}
+
+float3 ColorGradeColorFilter (float3 color) {
+	//颜色滤镜
+	return color * _ColorFilter.rgb;
+}
+
+float3 ColorGradingHueShift (float3 color) {
+	//色相
+	color = RgbToHsv(color);
+	float hue = color.x + _ColorAdjustments.z;
+	color.x = RotateHue(hue, 0.0, 1.0);
+	return HsvToRgb(color);
+}
+
+float3 ColorGradingSaturation (float3 color) {
+	//饱和度
+	float luminance = Luminance(color);
+	return (color - luminance) * _ColorAdjustments.w + luminance;
+}
+
+float3 ColorGradeSplitToning (float3 color) {
+	//色调分离
+	color = PositivePow(color, 1.0 / 2.2);
+	float t = saturate(Luminance(saturate(color)) + _SplitToningShadows.w);
+	float3 shadows = lerp(0.5, _SplitToningShadows.rgb, 1.0 - t);
+	float3 highlights = lerp(0.5, _SplitToningHighlights.rgb, t);
+	color = SoftLight(color, shadows);
+	color = SoftLight(color, highlights);
+	return PositivePow(color, 2.2);
+	return PositivePow(color, 2.2);
+}
+
+float3 ColorGradingChannelMixer (float3 color) {
+	return mul(
+		float3x3(_ChannelMixerRed.rgb, _ChannelMixerGreen.rgb, _ChannelMixerBlue.rgb),
+		color
+	);
+}
+
+float3 ColorGradingShadowsMidtonesHighlights (float3 color) {
+	//调阴影、中间调、高光
+	float luminance = Luminance(color);
+	float shadowsWeight = 1.0 - smoothstep(_SMHRange.x, _SMHRange.y, luminance);
+	float highlightsWeight = smoothstep(_SMHRange.z, _SMHRange.w, luminance);
+	float midtonesWeight = 1.0 - shadowsWeight - highlightsWeight;
+	return
+		color * _SMHShadows.rgb * shadowsWeight +
+		color * _SMHMidtones.rgb * midtonesWeight +
+		color * _SMHHighlights.rgb * highlightsWeight;
+}
+
+float3 ColorGrade(float3 color)
+{
+	color = min(color, 60);
+	color = ColorGradePostExposure(color);
+	color = ColorGradeWhiteBalance(color);
+	color = ColorGradingContrast(color);
+	color = ColorGradeColorFilter(color);
+	color = max(color, 0.0);
+	color = ColorGradeSplitToning(color);
+	color = ColorGradingChannelMixer(color);
+	color = max(color, 0.0);
+	color = ColorGradingShadowsMidtonesHighlights(color);
+	color = ColorGradingHueShift(color);
+	color = ColorGradingSaturation(color);
+	return max(color, 0.0);
+}
+
+float4 ColorGradingNonePassFragment (Varyings input) : SV_TARGET {
+	float4 color = GetSource(input.screenUV);
+	color.rgb = ColorGrade(color.rgb);
+	return color;
+}
+
 //公式：color / color + 1.0
 float4 ToneMappingReinhardPassFragment (Varyings input) : SV_TARGET {
 	float4 color = GetSource(input.screenUV);
-	color.rgb = min(color.rgb, 60.0);
+	color.rgb = ColorGrade(color.rgb);
 	color.rgb /= color.rgb + 1.0;
 	return color;
 }
 
 float4 ToneMappingNeutralPassFragment (Varyings input) : SV_TARGET {
 	float4 color = GetSource(input.screenUV);
-	color.rgb = min(color.rgb, 60.0);
+	color.rgb = ColorGrade(color.rgb);
 	color.rgb = NeutralTonemap(color.rgb);
 	return color;
 }
 
 float4 ToneMappingACESPassFragment (Varyings input) : SV_TARGET {
 	float4 color = GetSource(input.screenUV);
-	color.rgb = min(color.rgb, 60.0);
+	color.rgb = ColorGrade(color.rgb);
 	color.rgb = AcesTonemap(unity_to_ACES(color.rgb));
 	return color;
 }

@@ -128,6 +128,20 @@ Shader "Hidden/Linda RP/Post FX Stack"
 
 		Pass 
 		{
+			Name "Color Grading None"
+			
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma vertex DefaultPassVertex
+			#pragma fragment ColorGradingNonePassFragment
+
+			ENDHLSL
+		}
+
+		Pass 
+		{
 			Name "Tone Mapping ACES"
 			
 			HLSLPROGRAM
