@@ -15,6 +15,8 @@ public partial class PostFXStack
         BloomVertical,
         BloomHorizontal,
         Copy,
+        ToneMappingACES,
+        ToneMappingNeutral,
         ToneMappingReinhard,
     }
 
@@ -91,7 +93,7 @@ public partial class PostFXStack
     void DoToneMapping(int sourceId)
     {
         PostFXSettings.ToneMappingSettings.Mode mode = setting.ToneMapping.mode;
-        Pass pass = mode < 0 ? Pass.Copy : Pass.ToneMappingReinhard;
+        Pass pass = mode < 0 ? Pass.Copy : Pass.ToneMappingACES + (int)mode;
 
         Draw(sourceId, BuiltinRenderTextureType.CameraTarget, pass);
     }
