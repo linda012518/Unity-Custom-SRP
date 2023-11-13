@@ -4,6 +4,9 @@ using UnityEngine.Rendering;
 [Serializable]
 public class CameraSettings
 {
+	[RenderingLayerMaskField]
+	public int renderingLayerMask = -1;
+
 	public bool overridePostFX = false;
 
 	public PostFXSettings postFXSettings = default;

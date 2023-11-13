@@ -59,7 +59,7 @@ public partial class CameraRenderer
         postFXStack.Setup(context, camera, postFXSetting, useHDR, colorLUTResolution, cameraSettings.finalBlendMode);
         buffer.EndSample(SampleName);
         Setup();
-        DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject);
+        DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject, cameraSettings.renderingLayerMask);
         DrawUnsupportedShaders();
         DrawGizmosBeforeFX();
         if (postFXStack.IsActive)
@@ -101,7 +101,7 @@ public partial class CameraRenderer
         ExecuteBuffer();
     }
 
-    void DrawVisibleGeometry(bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject)
+    void DrawVisibleGeometry(bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, int renderingLayerMask)
     {
         PerObjectData lightsPerObjectFlags = useLightsPerObject ? PerObjectData.LightData | PerObjectData.LightIndices : PerObjectData.None;
         //传入相机，使用相机投影方式进行排序，criteria指定排序方式
@@ -113,7 +113,7 @@ public partial class CameraRenderer
             };
         drawingSettings.SetShaderPassName(1, litShaderTagId);
 
-        FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
+        FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.opaque, renderingLayerMask: (uint)renderingLayerMask);
 
         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
 
