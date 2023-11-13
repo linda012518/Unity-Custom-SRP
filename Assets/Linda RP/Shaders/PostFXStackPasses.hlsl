@@ -117,8 +117,8 @@ float4 BloomCombinePassFragment (Varyings input) : SV_TARGET {
 		lowRes = GetSource(input.screenUV).rgb;
 	}
 	
-	float3 highRes = GetSource2(input.screenUV).rgb;
-	return float4(lowRes * _BloomIntensity + highRes, 1.0);
+	float4 highRes = GetSource2(input.screenUV);
+	return float4(lowRes * _BloomIntensity + highRes.rgb, highRes.a);
 }
 
 //引入亮度阈值来限制影响Bloom效果，这样就会是全局都亮
@@ -194,10 +194,10 @@ float4 BloomScatterFinalPassFragment (Varyings input) : SV_TARGET {
 		lowRes = GetSource(input.screenUV).rgb;
 	}
 
-	float3 highRes = GetSource2(input.screenUV).rgb;
-	lowRes += highRes - ApplyBloomThreshold(highRes);
+	float4 highRes = GetSource2(input.screenUV);
+	lowRes += highRes - ApplyBloomThreshold(highRes.rgb);
 
-	return float4(lerp(highRes, lowRes, _BloomIntensity), 1.0);
+	return float4(lerp(highRes.rgb, lowRes, _BloomIntensity), highRes.a);
 }
 
 float4 _ColorAdjustments;

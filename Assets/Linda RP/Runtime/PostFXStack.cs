@@ -105,7 +105,7 @@ public partial class PostFXStack
         buffer.SetGlobalTexture(fxSourceId, from);
         buffer.SetRenderTarget(BuiltinRenderTextureType.CameraTarget,
             //tile-based GPU基于图块的GPU会有冗余数据，导致边缘黑边 RenderBufferLoadAction.Load 可以解决
-            camera.rect == fullViewRect ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load, RenderBufferStoreAction.Store);
+            RenderBufferLoadAction.Load, RenderBufferStoreAction.Store);
         buffer.SetViewport(camera.pixelRect);
         buffer.DrawProcedural(Matrix4x4.identity, setting.Material, (int)Pass.Final, MeshTopology.Triangles, 3);
     }

@@ -185,6 +185,8 @@ Shader "Hidden/Linda RP/Post FX Stack"
 		Pass 
 		{
 			Name "Final"
+
+			Blend SrcAlpha OneMinusSrcAlpha
 			
 			HLSLPROGRAM
 
