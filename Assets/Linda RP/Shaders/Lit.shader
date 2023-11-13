@@ -51,6 +51,7 @@ Shader "Linda RP/Lit"
 		{
 			Tags { "LightMode" = "LindaLit" }
 
+			//颜色和Alpha使用不同的混合模式，颜色前Alpha后
 			Blend [_SrcBlend] [_DstBlend], One OneMinusSrcAlpha
 			ZWrite [_ZWrite]
 

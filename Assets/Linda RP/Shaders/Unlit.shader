@@ -21,6 +21,7 @@ Shader "Linda RP/Unlit"
 
 		Pass
 		{
+			//颜色和Alpha使用不同的混合模式，颜色前Alpha后
 			Blend [_SrcBlend] [_DstBlend], One OneMinusSrcAlpha
 			ZWrite [_ZWrite]
 
