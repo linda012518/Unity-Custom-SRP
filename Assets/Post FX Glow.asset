@@ -9,23 +9,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9bbd02ee789eeda43820434fec4fba90, type: 3}
-  m_Name: Post FX Settings
+  m_Script: {fileID: 11500000, guid: c60e51e90af444f54a2715971fb6c2b2, type: 3}
+  m_Name: Post FX Glow
   m_EditorClassIdentifier: 
-  shader: {fileID: 4800000, guid: 6f0117a6de4e44d49b799574ba4796d7, type: 3}
+  shader: {fileID: 4800000, guid: 13276be0b701d4f1d89b2cfd3d83e0a1, type: 3}
   bloom:
-    maxIterations: 16
+    maxIterations: 2
     downscaleLimit: 2
     bicubicUpsampling: 1
-    threshold: 1
+    threshold: 0
     thresholdKnee: 0.5
-    intensity: 1
-    fadeFireflies: 1
-    mode: 1
-    scatter: 0.187
+    intensity: 0.8
+    fadeFireflies: 0
+    mode: 0
+    scatter: 0.7
   colorAdjustments:
     postExposure: 0
-    contrast: 0
+    contrast: 100
     colorFilter: {r: 1, g: 1, b: 1, a: 1}
     hueShift: 0
     saturation: 0
@@ -33,17 +33,17 @@ MonoBehaviour:
     temperature: 0
     tint: 0
   splitToning:
-    shadows: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    shadows: {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 1}
     highlights: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     balance: 0
   channelMixer:
-    red: {x: 1, y: 0, z: 0.3}
-    green: {x: 0, y: 1, z: 0.3}
-    blue: {x: 0, y: 0, z: 0.3}
+    red: {x: 1, y: 0, z: 0}
+    green: {x: 0, y: 1, z: 0}
+    blue: {x: 0, y: 0, z: 1}
   shadowsMidtonesHighlights:
-    shadows: {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 1}
-    midtones: {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 1}
-    highlights: {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 1}
+    shadows: {r: 1, g: 1, b: 1, a: 1}
+    midtones: {r: 1, g: 1, b: 1, a: 1}
+    highlights: {r: 1, g: 1, b: 1, a: 1}
     shadowsStart: 0
     shadowsEnd: 0.3
     highlightsStart: 0.55

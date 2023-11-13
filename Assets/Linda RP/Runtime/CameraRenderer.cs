@@ -38,6 +38,11 @@ public partial class CameraRenderer
         var crpCamera = camera.GetComponent<LindaRenderPipelineCamera>();
         CameraSettings cameraSettings = crpCamera ? crpCamera.Settings : defaultCameraSettings;
 
+        if (cameraSettings.overridePostFX)
+        {
+            postFXSetting = cameraSettings.postFXSettings;
+        }
+
         PrepareBuffer();
         //Scene窗口渲染UI，会给场景添加几何体，因此必须在剔除之前完成，不然会剔除掉
         PrepareForSceneWindow();
