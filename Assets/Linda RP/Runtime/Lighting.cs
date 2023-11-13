@@ -136,7 +136,7 @@ public class Lighting
         dirLightColors[index] = visibleLight.finalColor;
         //矩阵第3列是Z轴，可通过矩阵乘法推导，1列X轴，2列Y轴
         Vector4 dirAndMask = -visibleLight.localToWorldMatrix.GetColumn(2);
-        dirAndMask.w = light.renderingLayerMask;
+        dirAndMask.w = light.renderingLayerMask.ReinterpretAsFloat();
         dirLightDirections[index] = dirAndMask;
         //dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
         dirLightShadowData[index] = shadows.ReserveDirectionalShadows(light, visibleIndex);
@@ -153,7 +153,7 @@ public class Lighting
         otherLightSpotAngles[index] = new Vector4(0f, 1f);
 
         Vector4 dirAndmask = Vector4.zero;
-        dirAndmask.w = light.renderingLayerMask;
+        dirAndmask.w = light.renderingLayerMask.ReinterpretAsFloat();
         otherLightDirections[index] = dirAndmask;
 
         otherLightShadowData[index] = shadows.ReserveOtherShadows(light, visibleIndex);
@@ -168,7 +168,7 @@ public class Lighting
         otherLightPositions[index] = position;
         //otherLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
         Vector4 dirAndMask = -visibleLight.localToWorldMatrix.GetColumn(2);
-        dirAndMask.w = light.renderingLayerMask;
+        dirAndMask.w = light.renderingLayerMask.ReinterpretAsFloat();
         otherLightDirections[index] = dirAndMask;
 
         Light lightRuntime = visibleLight.light;
