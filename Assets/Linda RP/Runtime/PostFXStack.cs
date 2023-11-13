@@ -67,6 +67,8 @@ public partial class PostFXStack
 
     int colorLUTResolution;
 
+    static Rect fullViewRect = new Rect(0f, 0f, 1f, 1f);
+
     public bool IsActive => setting != null;
 
     public PostFXStack()
@@ -96,6 +98,16 @@ public partial class PostFXStack
         buffer.SetGlobalTexture(fxSourceId, from);
         buffer.SetRenderTarget(to, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
         buffer.DrawProcedural(Matrix4x4.identity, setting.Material, (int)pass, MeshTopology.Triangles, 3);
+    }
+
+    void DrawFinal(RenderTargetIdentifier from)
+    {
+        buffer.SetGlobalTexture(fxSourceId, from);
+        buffer.SetRenderTarget(BuiltinRenderTextureType.CameraTarget,
+            //tile-based GPU基于图块的GPU会有冗余数据，导致边缘黑边 RenderBufferLoadAction.Load 可以解决
+            camera.rect == fullViewRect ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load, RenderBufferStoreAction.Store);
+        buffer.SetViewport(camera.pixelRect);
+        buffer.DrawProcedural(Matrix4x4.identity, setting.Material, (int)Pass.Final, MeshTopology.Triangles, 3);
     }
 
     public void Render(int sourceId)
@@ -182,7 +194,7 @@ public partial class PostFXStack
 
         buffer.SetGlobalVector(colorGradingLUTParametersId,new Vector4(1f / lutWidth, 1f / lutHeight, lutHeight - 1f));
 
-        Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Final);
+        DrawFinal(sourceId);
         buffer.ReleaseTemporaryRT(colorGradingLUTId);
     }
 
