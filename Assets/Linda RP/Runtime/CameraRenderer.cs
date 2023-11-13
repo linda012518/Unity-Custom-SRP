@@ -26,12 +26,17 @@ public partial class CameraRenderer
 
     PostFXStack postFXStack = new PostFXStack();
 
+    static CameraSettings defaultCameraSettings = new CameraSettings();
+
     bool useHDR;
 
     public void Render(ScriptableRenderContext context, Camera camera, bool allowHDR, bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting, int colorLUTResolution)
     {
         this.context = context;
         this.camera = camera;
+
+        var crpCamera = camera.GetComponent<LindaRenderPipelineCamera>();
+        CameraSettings cameraSettings = crpCamera ? crpCamera.Settings : defaultCameraSettings;
 
         PrepareBuffer();
         //Scene窗口渲染UI，会给场景添加几何体，因此必须在剔除之前完成，不然会剔除掉
@@ -46,7 +51,7 @@ public partial class CameraRenderer
         ExecuteBuffer();
         //先Setup相机的东西会在渲染常规几何体之前切换到阴影图集，这样会有错，先渲染阴影
         lighting.Setup(context, cullingResults, shadowSettings, useLightsPerObject);
-        postFXStack.Setup(context, camera, postFXSetting, useHDR, colorLUTResolution);
+        postFXStack.Setup(context, camera, postFXSetting, useHDR, colorLUTResolution, cameraSettings.finalBlendMode);
         buffer.EndSample(SampleName);
         Setup();
         DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject);

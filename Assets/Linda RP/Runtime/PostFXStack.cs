@@ -59,6 +59,10 @@ public partial class PostFXStack
         smhHighlightsId = Shader.PropertyToID("_SMHHighlights"),
         smhRangeId = Shader.PropertyToID("_SMHRange");
 
+    int
+        finalSrcBlendId = Shader.PropertyToID("_FinalSrcBlend"),
+        finalDstBlendId = Shader.PropertyToID("_FinalDstBlend");
+
     const int maxBloomPyramidLevels = 16;
 
     int bloomPyramidId;
@@ -71,6 +75,8 @@ public partial class PostFXStack
 
     public bool IsActive => setting != null;
 
+    CameraSettings.FinalBlendMode finalBlendMode;
+
     public PostFXStack()
     {
         bloomPyramidId = Shader.PropertyToID("_BloomPyramid0");
@@ -81,8 +87,9 @@ public partial class PostFXStack
         }
     }
 
-    public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings setting, bool useHDR, int colorLUTResolution)
+    public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings setting, bool useHDR, int colorLUTResolution, CameraSettings.FinalBlendMode finalBlendMode)
     {
+        this.finalBlendMode = finalBlendMode;
         this.colorLUTResolution = colorLUTResolution;
         this.useHDR = useHDR;
         this.context = context;
@@ -102,10 +109,14 @@ public partial class PostFXStack
 
     void DrawFinal(RenderTargetIdentifier from)
     {
+        buffer.SetGlobalFloat(finalSrcBlendId, (float)finalBlendMode.source);
+        buffer.SetGlobalFloat(finalDstBlendId, (float)finalBlendMode.destination);
+
         buffer.SetGlobalTexture(fxSourceId, from);
         buffer.SetRenderTarget(BuiltinRenderTextureType.CameraTarget,
             //tile-based GPU基于图块的GPU会有冗余数据，导致边缘黑边 RenderBufferLoadAction.Load 可以解决
-            RenderBufferLoadAction.Load, RenderBufferStoreAction.Store);
+            finalBlendMode.destination == BlendMode.Zero && camera.rect == fullViewRect ?
+                RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load, RenderBufferStoreAction.Store);
         buffer.SetViewport(camera.pixelRect);
         buffer.DrawProcedural(Matrix4x4.identity, setting.Material, (int)Pass.Final, MeshTopology.Triangles, 3);
     }
