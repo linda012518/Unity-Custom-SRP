@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 [CreateAssetMenu(menuName = "Rendering/Linda Render Pipeline")]
-public class LindaRenderPipelineAsset : RenderPipelineAsset
+public partial class LindaRenderPipelineAsset : RenderPipelineAsset
 {
     [SerializeField]
     bool allowHDR = true;

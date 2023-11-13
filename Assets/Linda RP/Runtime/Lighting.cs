@@ -66,6 +66,7 @@ public class Lighting
         {
             int newIndex = -1;
             VisibleLight visibleLight = lights[i];
+            Light light = visibleLight.light;
 
             switch (visibleLight.lightType)
             {
@@ -73,18 +74,18 @@ public class Lighting
                     if (otherLightCount < maxOtherLightCount)
                     {
                         newIndex = otherLightCount;
-                        SetupSpotLight(otherLightCount++, i, ref visibleLight);
+                        SetupSpotLight(otherLightCount++, i, ref visibleLight, light);
                     }
                     break;
                 case LightType.Directional:
                     if (dirLightCount < maxDirLightCount)
-                        SetupDirectionalLight(dirLightCount++, i, ref visibleLight);
+                        SetupDirectionalLight(dirLightCount++, i, ref visibleLight, light);
                     break;
                 case LightType.Point:
                     if (otherLightCount < maxOtherLightCount)
                     {
                         newIndex = otherLightCount;
-                        SetupPointLight(otherLightCount++, i, ref visibleLight);
+                        SetupPointLight(otherLightCount++, i, ref visibleLight, light);
                     }
                     break;
             }
@@ -130,39 +131,49 @@ public class Lighting
         }
     }
 
-    void SetupDirectionalLight(int index, int visibleIndex, ref VisibleLight light)
+    void SetupDirectionalLight(int index, int visibleIndex, ref VisibleLight visibleLight, Light light)
     {
-        dirLightColors[index] = light.finalColor;
+        dirLightColors[index] = visibleLight.finalColor;
         //矩阵第3列是Z轴，可通过矩阵乘法推导，1列X轴，2列Y轴
-        dirLightDirections[index] = -light.localToWorldMatrix.GetColumn(2);
-        dirLightShadowData[index] = shadows.ReserveDirectionalShadows(light.light, visibleIndex);
+        Vector4 dirAndMask = -visibleLight.localToWorldMatrix.GetColumn(2);
+        dirAndMask.w = light.renderingLayerMask;
+        dirLightDirections[index] = dirAndMask;
+        //dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
+        dirLightShadowData[index] = shadows.ReserveDirectionalShadows(light, visibleIndex);
     }
 
-    void SetupPointLight(int index, int visibleIndex, ref VisibleLight light)
+    void SetupPointLight(int index, int visibleIndex, ref VisibleLight visibleLight, Light light)
     {
-        otherLightColors[index] = light.finalColor;
-        Vector4 position = light.localToWorldMatrix.GetColumn(3);
+        otherLightColors[index] = visibleLight.finalColor;
+        Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
         //计算半径平方倒数，shader减少计算量
-        position.w = 1.0f / Mathf.Max(light.range * light.range, 0.00001f);
+        position.w = 1.0f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
         otherLightPositions[index] = position;
         //确保点光源不受角度衰减计算的影响
         otherLightSpotAngles[index] = new Vector4(0f, 1f);
 
-        otherLightShadowData[index] = shadows.ReserveOtherShadows(light.light, visibleIndex);
+        Vector4 dirAndmask = Vector4.zero;
+        dirAndmask.w = light.renderingLayerMask;
+        otherLightDirections[index] = dirAndmask;
+
+        otherLightShadowData[index] = shadows.ReserveOtherShadows(light, visibleIndex);
     }
 
-    void SetupSpotLight(int index, int visibleIndex, ref VisibleLight light)
+    void SetupSpotLight(int index, int visibleIndex, ref VisibleLight visibleLight, Light light)
     {
-        otherLightColors[index] = light.finalColor;
-        Vector4 position = light.localToWorldMatrix.GetColumn(3);
+        otherLightColors[index] = visibleLight.finalColor;
+        Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
         //计算半径平方倒数，shader减少计算量
-        position.w = 1f / Mathf.Max(light.range * light.range, 0.00001f);
+        position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
         otherLightPositions[index] = position;
-        otherLightDirections[index] = -light.localToWorldMatrix.GetColumn(2);
+        //otherLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
+        Vector4 dirAndMask = -visibleLight.localToWorldMatrix.GetColumn(2);
+        dirAndMask.w = light.renderingLayerMask;
+        otherLightDirections[index] = dirAndMask;
 
-        Light lightRuntime = light.light;
+        Light lightRuntime = visibleLight.light;
         float innerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * lightRuntime.innerSpotAngle);
-        float outerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * light.spotAngle);
+        float outerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * visibleLight.spotAngle);
         float angleRangeInv = 1f / Mathf.Max(innerCos - outerCos, 0.001f);
         otherLightSpotAngles[index] = new Vector4(angleRangeInv, -outerCos * angleRangeInv);
 

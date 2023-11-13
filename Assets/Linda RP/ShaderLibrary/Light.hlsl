@@ -7,13 +7,13 @@
 CBUFFER_START(_LindaLight)
 	int _DirectionalLightCount;
 	float4 _DirectionalLightColors[Max_Directional_Light_Count];
-	float4 _DirectionalLightDirections[Max_Directional_Light_Count];
+	float4 _DirectionalLightDirectionsAndMasks[Max_Directional_Light_Count];
 	float4 _DirectionalLightShadowData[Max_Directional_Light_Count];
 
 	int _OtherLightCount;
 	float4 _OtherLightColors[Max_Other_Light_Count];
 	float4 _OtherLightPositions[Max_Other_Light_Count];
-	float4 _OtherLightDirections[Max_Other_Light_Count];
+	float4 _OtherLightDirectionsAndMasks[Max_Other_Light_Count];
 	float4 _OtherLightSpotAngles[Max_Other_Light_Count];
 	float4 _OtherLightShadowData[Max_Other_Light_Count];
 CBUFFER_END
@@ -22,6 +22,7 @@ struct Light {
 	float3 color;
 	float3 direction;
 	float attenuation;
+	uint renderingLayerMask;
 };
 
 int GetDirectionalCount()
@@ -60,7 +61,8 @@ Light GetDirectionalLight(int index, Surface surfaceWS, ShadowData shadowData)
 {
 	Light light;
 	light.color = _DirectionalLightColors[index].xyz;
-	light.direction = _DirectionalLightDirections[index].xyz;
+	light.direction = _DirectionalLightDirectionsAndMasks[index].xyz;
+	light.renderingLayerMask = asuint(_DirectionalLightDirectionsAndMasks[index].w);
 	DirectionalShadowData dirShadowData = GetDirectionalShadowData(index, shadowData);
 	light.attenuation = GetDirectionalShadowAttenuation(dirShadowData, shadowData, surfaceWS);
 	//light.attenuation = shadowData.cascadeIndex * 0.25;//查看级联球
@@ -84,7 +86,8 @@ Light GetOtherLight(int index, Surface surfaceWS, ShadowData shadowData)
 	float rangeAttenuation = Square(saturate(1.0 - Square(distanceSqr * _OtherLightPositions[index].w)));
 
 	float4 spotAngles = _OtherLightSpotAngles[index];
-	float3 spotDirection = _OtherLightDirections[index].xyz;
+	float3 spotDirection = _OtherLightDirectionsAndMasks[index].xyz;
+	light.renderingLayerMask = asuint(_OtherLightDirectionsAndMasks[index].w);
 	float spotAttenuation = Square(saturate(dot(spotDirection, light.direction) * spotAngles.x + spotAngles.y));
 	OtherShadowData otherShadowData = GetOtherShadowData(index);
 	otherShadowData.lightPositionWS = position;

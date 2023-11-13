@@ -7,6 +7,8 @@ CBUFFER_START(UnityPerDraw) //固定写法用UnityPerDraw
 	float4 unity_LODFade;
 	real4 unity_WorldTransformParams;
 
+	float4 unity_RenderingLayer;
+
 	real4 unity_LightData; //y分量是光源数量
 	real4 unity_LightIndices[2];//每个对象的灯光的索引，共8个
 
