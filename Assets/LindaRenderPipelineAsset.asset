@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: LindaRenderPipelineAsset
   m_EditorClassIdentifier: 
   allowHDR: 1
-  useDynamicBatching: 1
+  useDynamicBatching: 0
   useGPUInstancing: 1
   useSRPBatcher: 1
-  useLightsPerObject: 0
+  useLightsPerObject: 1
   shadows:
     maxDistance: 30
     distanceFade: 0.1
