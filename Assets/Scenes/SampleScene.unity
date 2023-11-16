@@ -4397,7 +4397,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d84bc075cb68c402db7a64bae956b997, type: 2}
+  - {fileID: 2100000, guid: def81e91972264404ad2b4c809fb8671, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9280,6 +9280,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   settings:
+    copyDepth: 1
     renderingLayerMask: -1
     maskLights: 0
     overridePostFX: 0
