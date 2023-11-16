@@ -59,9 +59,9 @@ float4 LitPassFragment(Varyings input) : SV_TARGET
 //	return unity_LODFade.x; //查看LOD值不要勾选Animate Cross-fading
 //#endif
 
-	ClipLOD(input.positionCS.xy, unity_LODFade.x);
+	InputConfig config = GetInputConfig(input.positionCS, input.uv0);
+	ClipLOD(config.fragment, unity_LODFade.x);
 
-	InputConfig config = GetInputConfig(input.uv0);
 #if defined(_MASK_MAP)
 	config.useMask = true;
 #endif
@@ -92,7 +92,7 @@ float4 LitPassFragment(Varyings input) : SV_TARGET
 	surface.smoothness = GetSmoothness(config);
 	surface.fresnelStrength = GetFresnel(config);
 	surface.viewDirection = normalize(_WorldSpaceCameraPos - input.positionWS);
-	surface.dither = InterleavedGradientNoise(input.positionCS.xy, 0);
+	surface.dither = InterleavedGradientNoise(config.fragment.positionSS, 0);
 	surface.renderingLayerMask = asuint(unity_RenderingLayer.x);
 
 	#if defined(_PREMULTIPLY_ALPHA)

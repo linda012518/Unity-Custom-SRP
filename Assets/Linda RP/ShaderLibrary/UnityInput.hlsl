@@ -43,4 +43,7 @@ float4x4 unity_MatrixPreviousMI;
 
 float3 _WorldSpaceCameraPos;
 
+float4 unity_OrthoParams;
+float4 _ProjectionParams;//x=区分opengl/dx平台Y方向，y=相机近平面距离，z=相机远平面距离
+
 #endif

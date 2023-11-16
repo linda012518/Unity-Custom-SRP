@@ -49,7 +49,7 @@ float4 UnlitPassFragment(Varyings input) : SV_TARGET
 {
 	UNITY_SETUP_INSTANCE_ID(input);
 
-	InputConfig config = GetInputConfig(input.uv0);
+	InputConfig config = GetInputConfig(input.positionCS, input.uv0);
 	#if defined(_VERTEX_COLORS)
 		config.color = input.color;
 	#endif
@@ -57,6 +57,10 @@ float4 UnlitPassFragment(Varyings input) : SV_TARGET
 	#if defined(_FLIPBOOK_BLENDING)
 		config.flipbookUVB = input.flipbookUVB;
 		config.flipbookBlending = true;
+	#endif
+
+	#if defined(_NEAR_FADE)
+		config.nearFade = true;
 	#endif
 
 	float4 base = GetBase(config);

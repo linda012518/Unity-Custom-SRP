@@ -41,9 +41,9 @@ void ShadowCasterFragment(Varyings input)
 {
 	UNITY_SETUP_INSTANCE_ID(input);
 
-	ClipLOD(input.positionCS.xy, unity_LODFade.x);
+	InputConfig config = GetInputConfig(input.positionCS, input.uv0);
+	ClipLOD(config.fragment, unity_LODFade.x);
 
-	InputConfig config = GetInputConfig(input.uv0);
 
 	float4 base = GetBase(config);
 #if defined(_SHADOWS_CLIP)
