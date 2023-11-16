@@ -8,7 +8,7 @@ Shader "Hidden/Linda RP/Camera Renderer"
 		
 		HLSLINCLUDE
 		#include "../ShaderLibrary/Common.hlsl"
-		#include "CameraRendererPasses.hlsl"
+		#include "./CameraRendererPasses.hlsl"
 		ENDHLSL
 
 		Pass 
