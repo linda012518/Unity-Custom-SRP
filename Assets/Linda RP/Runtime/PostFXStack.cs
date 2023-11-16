@@ -66,7 +66,7 @@ public partial class PostFXStack
         finalSrcBlendId = Shader.PropertyToID("_FinalSrcBlend"),
         finalDstBlendId = Shader.PropertyToID("_FinalDstBlend");
 
-    bool bicubicRescaling;
+    CameraBufferSettings.BicubicRescalingMode bicubicRescaling;
 
     const int maxBloomPyramidLevels = 16;
 
@@ -94,7 +94,7 @@ public partial class PostFXStack
         }
     }
 
-    public void Setup(ScriptableRenderContext context, Camera camera, Vector2Int bufferSize, PostFXSettings setting, bool useHDR, int colorLUTResolution, CameraSettings.FinalBlendMode finalBlendMode, bool bicubicRescaling)
+    public void Setup(ScriptableRenderContext context, Camera camera, Vector2Int bufferSize, PostFXSettings setting, bool useHDR, int colorLUTResolution, CameraSettings.FinalBlendMode finalBlendMode, CameraBufferSettings.BicubicRescalingMode bicubicRescaling)
     {
         this.bicubicRescaling = bicubicRescaling;
         this.bufferSize = bufferSize;
@@ -224,7 +224,11 @@ public partial class PostFXStack
             buffer.SetGlobalFloat(finalDstBlendId, 0f);
             buffer.GetTemporaryRT(finalResultId, bufferSize.x, bufferSize.y, 0, FilterMode.Bilinear, RenderTextureFormat.Default);
             Draw(sourceId, finalResultId, Pass.Final);
-            buffer.SetGlobalFloat(copyBicubicId, bicubicRescaling ? 1f : 0f);
+            bool bicubicSampling =
+                bicubicRescaling == CameraBufferSettings.BicubicRescalingMode.UpAndDown ||
+                bicubicRescaling == CameraBufferSettings.BicubicRescalingMode.UpOnly &&
+                bufferSize.x < camera.pixelWidth;
+            buffer.SetGlobalFloat(copyBicubicId, bicubicSampling ? 1f : 0f);
             DrawFinal(finalResultId, Pass.FinalRescale);
             buffer.ReleaseTemporaryRT(finalResultId);
         }
