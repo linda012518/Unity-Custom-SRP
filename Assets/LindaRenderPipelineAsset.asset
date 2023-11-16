@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraBuffer:
     allowHDR: 1
+    copyColor: 1
+    copyColorReflection: 0
     copyDepth: 1
     copyDepthReflections: 0
   useDynamicBatching: 0
@@ -35,6 +37,6 @@ MonoBehaviour:
     other:
       atlasSize: 1024
       filter: 0
-  postFXSetting: {fileID: 11400000, guid: a0e233a11c2abe0479e4ab6f59120269, type: 2}
+  postFXSetting: {fileID: 0}
   colorLUTResolution: 32
   cameraRendererShader: {fileID: 4800000, guid: a82eee4ad9c028b4e84728487acd8666, type: 3}

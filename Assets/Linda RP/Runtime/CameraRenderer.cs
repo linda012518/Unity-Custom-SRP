@@ -17,6 +17,7 @@ public partial class CameraRenderer
     static int 
         colorAttachmentId = Shader.PropertyToID("_CameraFrameBuffer"), 
         depthAttachmentId = Shader.PropertyToID("_CameraDepthAttachment"),
+        colorTextureId = Shader.PropertyToID("_CameraColorTexture"),
         depthTextureId = Shader.PropertyToID("_CameraDepthTexture"),
         sourceTextureId = Shader.PropertyToID("_SourceTexture");
 
@@ -34,7 +35,7 @@ public partial class CameraRenderer
 
     bool useHDR;
 
-    bool useDepthTexture, useIntermediateBuffer;
+    bool useColorTexture, useDepthTexture, useIntermediateBuffer;
 
     Material material;
 
@@ -65,10 +66,12 @@ public partial class CameraRenderer
         if (camera.cameraType == CameraType.Reflection)
         {
             useDepthTexture = bufferSettings.copyDepthReflections;
+            useColorTexture = bufferSettings.copyColorReflection;
         }
         else
         {
             useDepthTexture = bufferSettings.copyDepth && cameraSettings.copyDepth;
+            useColorTexture = bufferSettings.copyColor && cameraSettings.copyColor;
         }
 
         if (cameraSettings.overridePostFX)
@@ -124,7 +127,7 @@ public partial class CameraRenderer
         context.SetupCameraProperties(camera);
         CameraClearFlags flags = camera.clearFlags;
 
-        useIntermediateBuffer = useDepthTexture || postFXStack.IsActive;
+        useIntermediateBuffer = useColorTexture || useDepthTexture || postFXStack.IsActive;
 
         if (useIntermediateBuffer)
         {
@@ -141,6 +144,7 @@ public partial class CameraRenderer
         buffer.ClearRenderTarget(flags <= CameraClearFlags.Depth, flags == CameraClearFlags.Color, flags == CameraClearFlags.Color ? camera.backgroundColor.linear : Color.clear);
         //frame debug和性能分析器 标注开始点，好像和参数无关，最终使用的buffer.name，需要执行ExecuteCommandBuffer
         buffer.BeginSample(SampleName);
+        buffer.SetGlobalTexture(colorTextureId, missingTexture);
         buffer.SetGlobalTexture(depthTextureId, missingTexture);
         ExecuteBuffer();
     }
@@ -163,7 +167,10 @@ public partial class CameraRenderer
 
         context.DrawSkybox(camera);
 
-        CopyAttachments();
+        if (useColorTexture || useDepthTexture)
+        {
+            CopyAttachments();
+        }
 
         sortingSettings.criteria = SortingCriteria.CommonTransparent;
         drawingSettings.sortingSettings = sortingSettings;
@@ -194,6 +201,10 @@ public partial class CameraRenderer
             buffer.ReleaseTemporaryRT(colorAttachmentId);
             buffer.ReleaseTemporaryRT(depthAttachmentId);
 
+            if (useColorTexture)
+            {
+                buffer.ReleaseTemporaryRT(colorTextureId);
+            }
             if (useDepthTexture)
             {
                 buffer.ReleaseTemporaryRT(depthTextureId);
@@ -203,6 +214,21 @@ public partial class CameraRenderer
 
     void CopyAttachments()
     {
+        if (useColorTexture)
+        {
+            buffer.GetTemporaryRT(
+                colorTextureId, camera.pixelWidth, camera.pixelHeight, 0, 
+                FilterMode.Bilinear, useHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default);
+            if (copyTextureSupported)
+            {
+                buffer.CopyTexture(colorAttachmentId, colorTextureId);
+            }
+            else
+            {
+                Draw(colorAttachmentId, colorTextureId);
+            }
+        }
+
         if (useDepthTexture)
         {
             buffer.GetTemporaryRT(depthTextureId, camera.pixelWidth, camera.pixelHeight, 32, FilterMode.Point, RenderTextureFormat.Depth);
@@ -213,15 +239,18 @@ public partial class CameraRenderer
             else
             {
                 Draw(depthAttachmentId, depthTextureId, true);
-                buffer.SetRenderTarget(
-                    colorAttachmentId,
-                    RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
-                    depthAttachmentId,
-                    RenderBufferLoadAction.Load, RenderBufferStoreAction.Store
-                );
             }
-            ExecuteBuffer();
         }
+        if (!copyTextureSupported)
+        {
+            buffer.SetRenderTarget(
+                colorAttachmentId,
+                RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
+                depthAttachmentId,
+                RenderBufferLoadAction.Load, RenderBufferStoreAction.Store
+            );
+        }
+        ExecuteBuffer();
     }
 
     public void Dispose()
