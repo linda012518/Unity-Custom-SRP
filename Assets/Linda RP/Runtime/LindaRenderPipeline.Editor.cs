@@ -6,6 +6,8 @@ using LightType = UnityEngine.LightType;
 public partial class LindaRenderPipeline
 {
 
+	partial void DisposeForEditor();
+
 	partial void InitializeForEditor ();
 
 #if UNITY_EDITOR
@@ -14,9 +16,16 @@ public partial class LindaRenderPipeline
 		Lightmapping.SetDelegate(lightsDelegate);
 	}
 
-	protected override void Dispose (bool disposing) {
-		base.Dispose(disposing);
+	partial void DisposeForEditor()
+	{
 		Lightmapping.ResetDelegate();
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		base.Dispose(disposing);
+		DisposeForEditor();
+		renderer.Dispose();
 	}
 
 	static Lightmapping.RequestLightsDelegate lightsDelegate =

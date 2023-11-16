@@ -21,8 +21,11 @@ public partial class LindaRenderPipelineAsset : RenderPipelineAsset
     [SerializeField]
     ColorLUTResolution colorLUTResolution = ColorLUTResolution._32;
 
+    [SerializeField]
+    Shader cameraRendererShader = default;
+
     protected override RenderPipeline CreatePipeline()
     {
-        return new LindaRenderPipeline(allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting, (int)colorLUTResolution);
+        return new LindaRenderPipeline(allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting, (int)colorLUTResolution, cameraRendererShader);
     }
 }

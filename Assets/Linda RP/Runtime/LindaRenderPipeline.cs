@@ -5,14 +5,14 @@ using UnityEngine.Rendering;
 
 public partial class LindaRenderPipeline : RenderPipeline
 {
-    CameraRenderer renderer = new CameraRenderer();
+    CameraRenderer renderer;
     bool allowHDR;
     bool useDynamicBatching, useGPUInstancing, useLightsPerObject;
     ShadowSettings shadowSettings;
     PostFXSettings postFXSetting;
     int colorLUTResolution;
 
-    public LindaRenderPipeline(bool allowHDR, bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting, int colorLUTResolution)
+    public LindaRenderPipeline(bool allowHDR, bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting, int colorLUTResolution, Shader cameraRendererShader)
     {
         //使用SRP Batcher，材质内存布局要相同就可以，把材质属性存到了常量缓冲区，不会真正减少drawcall，减少了绘制前的准备工作
         GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;
@@ -24,6 +24,8 @@ public partial class LindaRenderPipeline : RenderPipeline
         this.postFXSetting = postFXSetting;
         this.allowHDR = allowHDR;
         this.colorLUTResolution = colorLUTResolution;
+
+        renderer = new CameraRenderer(cameraRendererShader);
 
         InitializeForEditor();
     }
