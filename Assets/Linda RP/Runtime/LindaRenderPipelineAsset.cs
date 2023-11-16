@@ -4,8 +4,14 @@ using UnityEngine.Rendering;
 [CreateAssetMenu(menuName = "Rendering/Linda Render Pipeline")]
 public partial class LindaRenderPipelineAsset : RenderPipelineAsset
 {
+    //[SerializeField]
+    //bool allowHDR = true;
+
     [SerializeField]
-    bool allowHDR = true;
+    CameraBufferSettings cameraBuffer = new CameraBufferSettings
+    {
+        allowHDR = true
+    };
 
     [SerializeField]
     bool useDynamicBatching = true, useGPUInstancing = true, useSRPBatcher = true, useLightsPerObject = true;
@@ -26,6 +32,6 @@ public partial class LindaRenderPipelineAsset : RenderPipelineAsset
 
     protected override RenderPipeline CreatePipeline()
     {
-        return new LindaRenderPipeline(allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting, (int)colorLUTResolution, cameraRendererShader);
+        return new LindaRenderPipeline(cameraBuffer, useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject, shadows, postFXSetting, (int)colorLUTResolution, cameraRendererShader);
     }
 }

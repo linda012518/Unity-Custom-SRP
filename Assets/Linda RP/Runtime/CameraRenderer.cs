@@ -38,12 +38,21 @@ public partial class CameraRenderer
 
     Material material;
 
+    Texture2D missingTexture;
+
     public CameraRenderer(Shader shader)
     {
         material = CoreUtils.CreateEngineMaterial(shader);
+        missingTexture = new Texture2D(1, 1)
+        {
+            hideFlags = HideFlags.HideAndDontSave,
+            name = "Missing"
+        };
+        missingTexture.SetPixel(0, 0, Color.white * 0.5f);
+        missingTexture.Apply(true, true);
     }
 
-    public void Render(ScriptableRenderContext context, Camera camera, bool allowHDR, bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting, int colorLUTResolution)
+    public void Render(ScriptableRenderContext context, Camera camera, CameraBufferSettings bufferSettings, bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings, PostFXSettings postFXSetting, int colorLUTResolution)
     {
         this.context = context;
         this.camera = camera;
@@ -51,7 +60,14 @@ public partial class CameraRenderer
         var crpCamera = camera.GetComponent<LindaRenderPipelineCamera>();
         CameraSettings cameraSettings = crpCamera ? crpCamera.Settings : defaultCameraSettings;
 
-        useDepthTexture = true;
+        if (camera.cameraType == CameraType.Reflection)
+        {
+            useDepthTexture = bufferSettings.copyDepthReflections;
+        }
+        else
+        {
+            useDepthTexture = bufferSettings.copyDepth && cameraSettings.copyDepth;
+        }
 
         if (cameraSettings.overridePostFX)
         {
@@ -65,7 +81,7 @@ public partial class CameraRenderer
         if (false == Cull(shadowSettings.maxDistance))
             return;
 
-        useHDR = allowHDR && camera.allowHDR;
+        useHDR = bufferSettings.allowHDR && camera.allowHDR;
 
         buffer.BeginSample(SampleName);
         ExecuteBuffer();
@@ -123,6 +139,7 @@ public partial class CameraRenderer
         buffer.ClearRenderTarget(flags <= CameraClearFlags.Depth, flags == CameraClearFlags.Color, flags == CameraClearFlags.Color ? camera.backgroundColor.linear : Color.clear);
         //frame debug和性能分析器 标注开始点，好像和参数无关，最终使用的buffer.name，需要执行ExecuteCommandBuffer
         buffer.BeginSample(SampleName);
+        buffer.SetGlobalTexture(depthTextureId, missingTexture);
         ExecuteBuffer();
     }
 
@@ -195,6 +212,7 @@ public partial class CameraRenderer
     public void Dispose()
     {
         CoreUtils.Destroy(material);
+        CoreUtils.Destroy(missingTexture);
     }
 
     void Draw(RenderTargetIdentifier from, RenderTargetIdentifier to)

@@ -63,6 +63,10 @@ float4 UnlitPassFragment(Varyings input) : SV_TARGET
 		config.nearFade = true;
 	#endif
 
+	#if defined(_SOFT_PARTICLES)
+		config.softParticles = true;
+	#endif
+
 	float4 base = GetBase(config);
 #if defined(_CLIPPING)
 	clip(base.a - GetCutoff(config));
