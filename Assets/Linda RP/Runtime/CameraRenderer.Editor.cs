@@ -43,6 +43,7 @@ public partial class CameraRenderer
         {
             //场景窗口的UI是由另一个RP绘制的，正常不会显示在场景窗口，这个方法专门渲染UI
             ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
+            useScaledRendering = false;
         }
     }
 
