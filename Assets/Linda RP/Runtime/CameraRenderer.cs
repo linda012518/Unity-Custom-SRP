@@ -5,6 +5,8 @@ using UnityEngine.Rendering;
 
 public partial class CameraRenderer
 {
+    public const float renderScaleMin = 0.1f, renderScaleMax = 2f;
+
     //CommandBuffer名字，方便在frame debug里查看
     const string bufferName = "Render Camera";
 
@@ -86,7 +88,7 @@ public partial class CameraRenderer
             postFXSetting = cameraSettings.postFXSettings;
         }
 
-        float renderScale = bufferSettings.renderScale;
+        float renderScale = cameraSettings.GetRenderScale(bufferSettings.renderScale);
         useScaledRendering = renderScale < 0.99f || renderScale > 1.01f;
 
         PrepareBuffer();
@@ -100,6 +102,7 @@ public partial class CameraRenderer
 
         if (useScaledRendering)
         {
+            renderScale = Mathf.Clamp(renderScale, renderScaleMin, renderScaleMax);
             bufferSize.x = (int)(camera.pixelWidth * renderScale);
             bufferSize.y = (int)(camera.pixelHeight * renderScale);
         }
