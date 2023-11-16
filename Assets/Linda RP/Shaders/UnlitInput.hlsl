@@ -3,6 +3,8 @@
 
 TEXTURE2D(_BaseMap);
 SAMPLER(sampler_BaseMap);
+TEXTURE2D(_DistortionMap);
+SAMPLER(sampler_DistortionMap);
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial) //CBUFFER_START固定写法用UnityPerMaterial
 	UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
@@ -11,6 +13,8 @@ UNITY_INSTANCING_BUFFER_START(UnityPerMaterial) //CBUFFER_START固定写法用UnityPe
 	UNITY_DEFINE_INSTANCED_PROP(float, _NearFadeRange)
 	UNITY_DEFINE_INSTANCED_PROP(float, _SoftParticlesDistance)
 	UNITY_DEFINE_INSTANCED_PROP(float, _SoftParticlesRange)
+	UNITY_DEFINE_INSTANCED_PROP(float, _DistortionStrength)
+	UNITY_DEFINE_INSTANCED_PROP(float, _DistortionBlend)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff)
 	UNITY_DEFINE_INSTANCED_PROP(float, _ZWrite)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
@@ -84,6 +88,18 @@ float GetFresnel (InputConfig c) {
 
 float GetFinalAlpha (float alpha) {
 	return Input_Prop(_ZWrite) ? 1.0 : alpha;
+}
+
+float2 GetDistortion (InputConfig c) {
+	float4 rawMap = SAMPLE_TEXTURE2D(_DistortionMap, sampler_DistortionMap, c.baseUV);
+	if (c.flipbookBlending) {
+		rawMap = lerp(rawMap, SAMPLE_TEXTURE2D(_DistortionMap, sampler_DistortionMap, c.flipbookUVB.xy), c.flipbookUVB.z);
+	}
+	return DecodeNormal(rawMap, Input_Prop(_DistortionStrength)).xy;
+}
+
+float GetDistortionBlend (InputConfig c) {
+	return Input_Prop(_DistortionBlend);
 }
 
 #endif
