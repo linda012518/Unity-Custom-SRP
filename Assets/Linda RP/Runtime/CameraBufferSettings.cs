@@ -45,6 +45,10 @@ public struct CameraBufferSettings
 		//   0.00 - completely off
 		[UnityEngine.Range(0f, 1f)]
 		public float subpixelBlending;
+
+		public enum Quality { Low, Medium, High }
+
+		public Quality quality;
 	}
 
 	public FXAA fxaa;
