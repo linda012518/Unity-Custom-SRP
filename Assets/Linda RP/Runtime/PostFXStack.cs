@@ -70,6 +70,8 @@ public partial class PostFXStack
         finalSrcBlendId = Shader.PropertyToID("_FinalSrcBlend"),
         finalDstBlendId = Shader.PropertyToID("_FinalDstBlend");
 
+    int fxaaConfigId = Shader.PropertyToID("_FXAAConfig");
+
     CameraBufferSettings.BicubicRescalingMode bicubicRescaling;
 
     const int maxBloomPyramidLevels = 16;
@@ -227,6 +229,8 @@ public partial class PostFXStack
 
         if (fxaa.enabled)
         {
+            buffer.SetGlobalVector(fxaaConfigId, new Vector4(fxaa.fixedThreshold, 0f));
+
             buffer.GetTemporaryRT(colorGradingResultId, bufferSize.x, bufferSize.y, 0, FilterMode.Bilinear, RenderTextureFormat.Default);
             Draw(sourceId, colorGradingResultId, keepAlpha ? Pass.ApplyColorGrading : Pass.ApplyColorGradingWithLuma);
         }
