@@ -52,7 +52,7 @@ float GetSubpixelBlendFactor (LumaNeighborhood luma) {
 	filter = abs(filter - luma.m);//滤波器 平均值减中间值
 	filter = saturate(filter / luma.range);//除以亮度范围来对滤波器进行归一化
 	filter = smoothstep(0, 1, filter);
-	return filter * filter;
+	return filter * filter * _FXAAConfig.z;
 }
 
 bool IsHorizontalEdge (LumaNeighborhood luma) {
@@ -102,12 +102,20 @@ float4 FXAAPassFragment (Varyings input) : SV_TARGET {
 	LumaNeighborhood luma = GetLumaNeighborhood(input.screenUV);
 
 	if (CanSkipFXAA(luma)) {
-		return 0.0;
+		return GetSource(input.screenUV);
 	}
 
 	FXAAEdge edge = GetFXAAEdge(luma);
 
-	return edge.pixelStep > 0.0 ? float4(1.0, 0.0, 0.0, 0.0) : 1.0;
+	float blendFactor = GetSubpixelBlendFactor(luma);
+	float2 blendUV = input.screenUV;
+	if (edge.isHorizontal) {
+		blendUV.y += blendFactor * edge.pixelStep;
+	}
+	else {
+		blendUV.x += blendFactor * edge.pixelStep;
+	}
+	return GetSource(blendUV);
 }
 
 #endif
