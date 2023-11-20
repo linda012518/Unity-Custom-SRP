@@ -13,4 +13,13 @@ public struct CameraBufferSettings
 	public enum BicubicRescalingMode { Off, UpOnly, UpAndDown }
 
 	public BicubicRescalingMode bicubicRescaling;
+
+	[System.Serializable]
+	public struct FXAA
+	{
+
+		public bool enabled;
+	}
+
+	public FXAA fxaa;
 }

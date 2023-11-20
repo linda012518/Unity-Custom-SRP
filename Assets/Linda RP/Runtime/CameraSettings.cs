@@ -23,6 +23,8 @@ public class CameraSettings
 
 	public PostFXSettings postFXSettings = default;
 
+	public bool allowFXAA = false;
+
 	[Serializable]
 	public struct FinalBlendMode
 	{
