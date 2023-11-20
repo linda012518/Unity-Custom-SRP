@@ -200,6 +200,20 @@ Shader "Hidden/Linda RP/Post FX Stack"
 
 		Pass 
 		{
+			Name "Apply Color Grading With Luma"
+
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma vertex DefaultPassVertex
+			#pragma fragment ApplyColorGradingWithLumaPassFragment
+
+			ENDHLSL
+		}
+
+		Pass 
+		{
 			Name "Final Rescale"
 
 			Blend [_FinalSrcBlend] [_FinalDstBlend]
@@ -226,6 +240,26 @@ Shader "Hidden/Linda RP/Post FX Stack"
 
 			#pragma vertex DefaultPassVertex
 			#pragma fragment FXAAPassFragment
+
+			#include "FXAAPass.hlsl"
+
+			ENDHLSL
+		}
+
+		Pass 
+		{
+			Name "FXAA With Luma"
+
+			Blend [_FinalSrcBlend] [_FinalDstBlend]
+			
+			HLSLPROGRAM
+
+			#pragma target 3.5
+
+			#pragma vertex DefaultPassVertex
+			#pragma fragment FXAAPassFragment
+
+			#define FXAA_ALPHA_CONTAINS_LUMA
 
 			#include "FXAAPass.hlsl"
 
