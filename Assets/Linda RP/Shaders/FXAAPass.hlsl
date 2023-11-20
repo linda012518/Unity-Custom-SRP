@@ -55,6 +55,49 @@ float GetSubpixelBlendFactor (LumaNeighborhood luma) {
 	return filter * filter;
 }
 
+bool IsHorizontalEdge (LumaNeighborhood luma) {
+	float horizontal =
+		2.0 * abs(luma.n + luma.s - 2.0 * luma.m) +
+		abs(luma.ne + luma.se - 2.0 * luma.e) +
+		abs(luma.nw + luma.sw - 2.0 * luma.w);
+	float vertical =
+		2.0 * abs(luma.e + luma.w - 2.0 * luma.m) +
+		abs(luma.ne + luma.nw - 2.0 * luma.n) +
+		abs(luma.se + luma.sw - 2.0 * luma.s);
+	return horizontal >= vertical;
+}
+
+struct FXAAEdge {
+	bool isHorizontal;
+	float pixelStep;//象素步长
+};
+
+FXAAEdge GetFXAAEdge (LumaNeighborhood luma) {
+	FXAAEdge edge;
+	edge.isHorizontal = IsHorizontalEdge(luma);
+	//确定向哪个方向混合，用当前相反方向减中间值结果，哪个大往哪边混合
+	float lumaP, lumaN;
+	if (edge.isHorizontal) {
+		edge.pixelStep = GetSourceTexelSize().y;
+		lumaP = luma.n;
+		lumaN = luma.s;
+	}
+	else {
+		edge.pixelStep = GetSourceTexelSize().x;
+		lumaP = luma.e;
+		lumaN = luma.w;
+	}
+
+	float gradientP = abs(lumaP - luma.m);
+	float gradientN = abs(lumaN - luma.m);
+
+	if (gradientP < gradientN) {
+		edge.pixelStep = -edge.pixelStep;
+	}
+
+	return edge;
+}
+
 float4 FXAAPassFragment (Varyings input) : SV_TARGET {
 	LumaNeighborhood luma = GetLumaNeighborhood(input.screenUV);
 
@@ -62,7 +105,9 @@ float4 FXAAPassFragment (Varyings input) : SV_TARGET {
 		return 0.0;
 	}
 
-	return GetSubpixelBlendFactor(luma);
+	FXAAEdge edge = GetFXAAEdge(luma);
+
+	return edge.pixelStep > 0.0 ? float4(1.0, 0.0, 0.0, 0.0) : 1.0;
 }
 
 #endif
