@@ -126,20 +126,26 @@ float GetEdgeBlendFactor (LumaNeighborhood luma, FXAAEdge edge, float2 uv) {
 	bool atEndP = abs(lumaDeltaP) >= gradientThreshold;
 
 	int i;
-	for (i = 0; i < 99 && !atEndP; i++) {
+	for (i = 0; i < 3 && !atEndP; i++) {
 		uvP += uvStep;
 		lumaDeltaP = GetLuma(uvP) - edgeLuma;
 		atEndP = abs(lumaDeltaP) >= gradientThreshold;
+	}
+	if (!atEndP) {
+		uvP += uvStep;
 	}
 
 	float2 uvN = edgeUV - uvStep;
 	float lumaDeltaN = GetLuma(uvN) - edgeLuma;
 	bool atEndN = abs(lumaDeltaN) >= gradientThreshold;
 
-	for (i = 0; i < 99 && !atEndN; i++) {
+	for (i = 0; i < 3 && !atEndN; i++) {
 		uvN -= uvStep;
 		lumaDeltaN = GetLuma(uvN) - edgeLuma;
 		atEndN = abs(lumaDeltaN) >= gradientThreshold;
+	}
+	if (!atEndN) {
+		uvN -= uvStep;
 	}
 
 	float distanceToEndP, distanceToEndN;
@@ -168,7 +174,7 @@ float GetEdgeBlendFactor (LumaNeighborhood luma, FXAAEdge edge, float2 uv) {
 		return 0.0;
 	}
 	else {
-		return 10.0 * distanceToNearestEnd;
+		return 0.5 - distanceToNearestEnd / (distanceToEndP + distanceToEndN);
 	}
 }
 
@@ -176,14 +182,14 @@ float4 FXAAPassFragment (Varyings input) : SV_TARGET {
 	LumaNeighborhood luma = GetLumaNeighborhood(input.screenUV);
 
 	if (CanSkipFXAA(luma)) {
-		//return GetSource(input.screenUV);
-		return 0.0;
+		return GetSource(input.screenUV);
+		//return 0.0;
 	}
 
 	FXAAEdge edge = GetFXAAEdge(luma);
 
-	float blendFactor = GetEdgeBlendFactor(luma, edge, input.screenUV);
-	return blendFactor;
+	float blendFactor = max(GetSubpixelBlendFactor(luma), GetEdgeBlendFactor(luma, edge, input.screenUV));
+
 	float2 blendUV = input.screenUV;
 	if (edge.isHorizontal) {
 		blendUV.y += blendFactor * edge.pixelStep;
