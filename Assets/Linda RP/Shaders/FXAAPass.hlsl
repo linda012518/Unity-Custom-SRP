@@ -70,6 +70,7 @@ bool IsHorizontalEdge (LumaNeighborhood luma) {
 struct FXAAEdge {
 	bool isHorizontal;
 	float pixelStep;//象素步长
+	float lumaGradient, otherLuma;//梯度、亮度
 };
 
 FXAAEdge GetFXAAEdge (LumaNeighborhood luma) {
@@ -93,21 +94,33 @@ FXAAEdge GetFXAAEdge (LumaNeighborhood luma) {
 
 	if (gradientP < gradientN) {
 		edge.pixelStep = -edge.pixelStep;
+		edge.lumaGradient = gradientN;
+		edge.otherLuma = lumaN;
+	}
+	else {
+		edge.lumaGradient = gradientP;
+		edge.otherLuma = lumaP;
 	}
 
 	return edge;
+}
+
+float GetEdgeBlendFactor (LumaNeighborhood luma, FXAAEdge edge, float2 uv) {
+	return edge.lumaGradient;
 }
 
 float4 FXAAPassFragment (Varyings input) : SV_TARGET {
 	LumaNeighborhood luma = GetLumaNeighborhood(input.screenUV);
 
 	if (CanSkipFXAA(luma)) {
-		return GetSource(input.screenUV);
+		//return GetSource(input.screenUV);
+		return 0.0;
 	}
 
 	FXAAEdge edge = GetFXAAEdge(luma);
 
-	float blendFactor = GetSubpixelBlendFactor(luma);
+	float blendFactor = GetEdgeBlendFactor(luma, edge, input.screenUV);
+	return blendFactor;
 	float2 blendUV = input.screenUV;
 	if (edge.isHorizontal) {
 		blendUV.y += blendFactor * edge.pixelStep;
